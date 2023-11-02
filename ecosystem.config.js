@@ -16,7 +16,7 @@ module.exports = {
       host: "91.134.90.80", // Adresse IP ou nom de domaine de votre serveur distant
       ref: "main", // Branche Git à déployer
       repo: "git@github.com:jecombe/server_nftguessr.git", // URL de votre dépôt Git
-      path: "/home/ubuntu/server/source", // Chemin sur le serveur distant où vous souhaitez déployer l'application
+      path: "/home/ubuntu/server", // Chemin sur le serveur distant où vous souhaitez déployer l'application
       "pre-deploy-local": "", // Commande pré-déploiement locale
       "post-deploy":
         "source ~/.nvm/nvm.sh && npm install && pm2 startOrRestart ecosystem.config.js --env production", // Commandes post-déploiement
