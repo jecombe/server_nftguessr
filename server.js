@@ -31,6 +31,9 @@ const authorizeRole = (role) => {
 
 // Utilisation du middleware cors pour autoriser les requêtes CORS
 app.use(cors());
+// Assurez-vous d'utiliser express.json() pour gérer les données JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Exemple d'une route sécurisée avec authentification et autorisation
 app.get(
@@ -51,12 +54,19 @@ app.listen(port, () => {
 });
 
 app.get("/api/get-gps", (req, res) => {
-  const rawData = fs.readFileSync("./locations/validLocations.json");
-  const randomLocations = JSON.parse(rawData);
+  // Lire les coordonnées GPS depuis le fichier JSON
+  try {
+    const rawData = fs.readFileSync("./locations/validLocations.json");
+    const randomLocations = JSON.parse(rawData);
 
-  const randomIndex = Math.floor(Math.random() * randomLocations.length);
-  const randomCoordinates = randomLocations[randomIndex];
-  console.log(randomCoordinates);
+    // Sélectionnez un élément aléatoire du tableau randomLocations
+    const randomIndex = Math.floor(Math.random() * randomLocations.length);
+    const randomCoordinates = randomLocations[randomIndex];
+    console.log(randomCoordinates);
 
-  res.json(randomCoordinates);
+    res.json(randomCoordinates);
+  } catch (error) {
+    console.error("Erreur de lecture du fichier JSON.", error);
+    res.status(500).send("Erreur interne du serveur.");
+  }
 });

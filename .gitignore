@@ -1,0 +1,19 @@
+# Dossiers
+node_modules/
+logs/
+coverage/
+
+# Fichiers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.log
+*.pid
+*.seed
+*.db
