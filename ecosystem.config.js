@@ -15,7 +15,7 @@ module.exports = {
       user: "ubuntu", // Nom d'utilisateur sur le serveur distant
       host: "91.134.90.80", // Adresse IP ou nom de domaine de votre serveur distant
       ref: "main", // Branche Git à déployer
-      repo: "git@github.com:votre-utilisateur/votre-repo.git", // URL de votre dépôt Git
+      repo: "git@github.com:jecombe/server_nftguessr.git", // URL de votre dépôt Git
       path: "/home/ubuntu", // Chemin sur le serveur distant où vous souhaitez déployer l'application
       "pre-deploy-local": "", // Commande pré-déploiement locale
       "post-deploy":
