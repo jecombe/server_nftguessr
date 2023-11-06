@@ -1,42 +1,42 @@
 [
   {
-    "latitude": 52.6135691,
-    "longitude": 21.1117255,
-    "northLat": 5261806,
-    "southLat": 5260907,
-    "eastLon": 2111735,
-    "westLon": 2110610
+    "latitude": 57.3364077,
+    "longitude": 24.6826228,
+    "northLat": 5735886,
+    "southLat": 5731394,
+    "eastLon": 2470508,
+    "westLon": 2466016
   },
   {
-    "latitude": 47.2803873,
-    "longitude": 14.5660412,
-    "northLat": 4728488,
-    "southLat": 4727589,
-    "eastLon": 1457166,
-    "westLon": 1456041
+    "latitude": 61.4981211,
+    "longitude": 7.753788199999999,
+    "northLat": 6152057,
+    "southLat": 6147566,
+    "eastLon": 777624,
+    "westLon": 773133
   },
   {
-    "latitude": 13.9233251,
-    "longitude": 103.0408052,
-    "northLat": 1392782,
-    "southLat": 1391882,
-    "eastLon": 10304643,
-    "westLon": 10303518
+    "latitude": 52.8103674,
+    "longitude": 1.3884171,
+    "northLat": 5283282,
+    "southLat": 5278790,
+    "eastLon": 141087,
+    "westLon": 136595
   },
   {
-    "latitude": 50.3076823,
-    "longitude": 16.2438833,
-    "northLat": 5031217,
-    "southLat": 5030318,
-    "eastLon": 1624950,
-    "westLon": 1623825
+    "latitude": 50.9399582,
+    "longitude": 1.891932,
+    "northLat": 5096241,
+    "southLat": 5091750,
+    "eastLon": 191438,
+    "westLon": 186947
   },
   {
-    "latitude": 18.0244995,
-    "longitude": 103.7069771,
-    "northLat": 1802899,
-    "southLat": 1802000,
-    "eastLon": 10371260,
-    "westLon": 10370135
+    "latitude": 61.84961869999999,
+    "longitude": 5.3486996,
+    "northLat": 6187207,
+    "southLat": 6182716,
+    "eastLon": 537115,
+    "westLon": 532624
   }
 ]
