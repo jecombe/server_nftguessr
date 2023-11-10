@@ -11,7 +11,7 @@ const fs = require("fs");
 dotenv.config();
 const contractInfo = require("./abi/Geo.json");
 
-const provider = new JsonRpcProvider(process.env.PROVIDER);
+const provider = new JsonRpcProvider("https://devnet.zama.ai/");
 let _instance;
 const CONTRACT_ADDRESS = process.env.AMM;
 const sign = process.env.SECRET;

@@ -5,7 +5,9 @@
     "northLat": 5735886,
     "southLat": 5731394,
     "eastLon": 2470508,
-    "westLon": 2466016
+    "westLon": 2466016,
+    "tokenId": 1,
+    "tax": 0
   },
   {
     "latitude": 61.4981211,
@@ -13,7 +15,9 @@
     "northLat": 6152057,
     "southLat": 6147566,
     "eastLon": 777624,
-    "westLon": 773133
+    "westLon": 773133,
+    "tokenId": 2,
+    "tax": 0
   },
   {
     "latitude": 52.8103674,
@@ -21,7 +25,9 @@
     "northLat": 5283282,
     "southLat": 5278790,
     "eastLon": 141087,
-    "westLon": 136595
+    "westLon": 136595,
+    "tokenId": 3,
+    "tax": 2
   },
   {
     "latitude": 50.9399582,
@@ -29,7 +35,9 @@
     "northLat": 5096241,
     "southLat": 5091750,
     "eastLon": 191438,
-    "westLon": 186947
+    "westLon": 186947,
+    "tokenId": 4,
+    "tax": 0
   },
   {
     "latitude": 61.84961869999999,
@@ -37,6 +45,8 @@
     "northLat": 6187207,
     "southLat": 6182716,
     "eastLon": 537115,
-    "westLon": 532624
+    "westLon": 532624,
+    "tokenId": 5,
+    "tax": 0
   }
 ]

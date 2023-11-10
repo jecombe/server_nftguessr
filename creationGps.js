@@ -1,10 +1,7 @@
 const { Client } = require("@googlemaps/google-maps-services-js");
 const fs = require("fs");
 const axios = require("axios");
-const sharp = require("sharp");
-const pixelmatch = require("pixelmatch");
 const util = require("util");
-const { PNG } = require("pngjs");
 
 const writeFile = util.promisify(fs.writeFile);
 
@@ -217,7 +214,7 @@ function createSquareAroundPointWithDecimals(
     westLon: scaledWestLon,
   };
 }
-
+const id = 1;
 async function main() {
   const validLocations = [];
   while (validLocations.length < 5) {
@@ -241,7 +238,10 @@ async function main() {
           southLat: square.southLat,
           eastLon: square.eastLon,
           westLon: square.westLon,
+          tax: 0,
+          id,
         });
+        id++;
         console.log(
           `Points GPS valides enregistrés : ${validLocations.length}`
         );
@@ -255,11 +255,18 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 500)); // Attendez 2 secondes
   }
   await writeFile(
-    "../locations/validLocations.json",
+    "./locations/validLocations.json",
     JSON.stringify(validLocations, null, 2)
   );
 }
 
-main().catch((error) => {
-  console.error("Une erreur s'est produite :", error);
-});
+// main().catch((error) => {
+//   console.error("Une erreur s'est produite :", error);
+// });
+
+const square = createSquareAroundPointWithDecimals(
+  nearestRoad.lat,
+  nearestRoad.lng,
+  5
+);
+console.log(square);
