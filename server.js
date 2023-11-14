@@ -19,11 +19,13 @@ const CryptoJS = require("crypto-js");
 const contractInfo = require("./interact/abi/Geo.json");
 const server = http.createServer(app); // Remplacez app par server
 const TelegramBot = require("node-telegram-bot-api");
-
 const path = "./locations/validLocations.json";
+const path2 = "./locations/signature.json";
+
 // ...
 const dotenv = require("dotenv");
 const log4js = require("log4js");
+const startChecking = require("./test");
 
 log4js.configure({
   appenders: {
@@ -35,6 +37,7 @@ log4js.configure({
   },
   categories: { default: { appenders: ["server"], level: "all" } },
 });
+
 const logger = log4js.getLogger();
 dotenv.config();
 
@@ -170,6 +173,7 @@ app.get("/api/get-gps", (req, res) => {
 app.get("/api/get-holder-and-token", async (req, res) => {
   try {
     const result = await contract.getNFTOwnersAndTokenIds();
+    console.log(result);
     const sendObj = await groupAddressesWithIds(result[0], result[1]);
     res.json(sendObj);
   } catch (error) {
@@ -220,6 +224,144 @@ app.get("/api/get-total-nft-reset", async (req, res) => {
     res.json(nftsStake.toString());
   } catch (error) {
     res.status(500).send("Error intern server (6).");
+  }
+});
+
+app.post("/api/request-new-coordinates", async (req, res) => {
+  const { nftId, signature } = req.body;
+
+  try {
+    sendTelegramMessage({ message: "new coordinate" });
+
+    const signatureData = fs.readFileSync(path2, "utf-8");
+    const signatureList = JSON.parse(signatureData);
+    const validSignature = signatureList.some(
+      (entry) => entry.signature === signature
+    );
+    if (!validSignature) {
+      res.status(401).json({ success: false, message: "Invalid signature" });
+      return;
+    }
+    const signer = new Wallet(process.env.SECRET, provider);
+    // Initialize contract with ethers
+    const contractSign = new Contract(
+      process.env.CONTRACT,
+      contractInfo,
+      signer
+    );
+
+    const nb = await contractSign.getNFTLocation(nftId);
+    const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
+
+    const latitude = tableauNombres[5] / 1e5;
+    const longitude = tableauNombres[6] / 1e5;
+    const toWrite = {
+      latitude,
+      longitude,
+      northLat: tableauNombres[0],
+      southLat: tableauNombres[1],
+      eastLon: tableauNombres[2],
+      westLon: tableauNombres[3],
+      tax: tableauNombres[4],
+      id: nftId,
+      lat: tableauNombres[5],
+      lng: tableauNombres[6],
+    };
+    console.log(toWrite);
+
+    fs.readFile(path, "utf8", (err, data) => {
+      if (err) {
+        console.error("Erreur lors de la lecture du fichier :", err);
+        return;
+      }
+
+      // Parsez le contenu JSON
+      let contenuJSON;
+      try {
+        contenuJSON = JSON.parse(data);
+      } catch (error) {
+        console.error("Erreur lors du parsing JSON :", error);
+        return;
+      }
+
+      // Ajoutez les nouvelles données au tableau existant
+      contenuJSON.push(toWrite);
+
+      // Convertissez le contenu modifié en JSON
+      const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
+
+      // Écrivez le nouveau contenu dans le fichier
+      fs.writeFile(path, nouveauContenuJSON, "utf8", (err) => {
+        if (err) {
+          console.error("Erreur lors de l'écriture dans le fichier :", err);
+          sendTelegramMessage(
+            `Erreur lors de l'écriture dans le fichier ${nftId}`
+          );
+
+          res.json({ success: false });
+          return;
+        } else {
+          sendTelegramMessage(`save gps ${nftId}`);
+          console.log("Données ajoutées avec succès !");
+        }
+      });
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.log(error);
+    sendTelegramMessage(`error gps ${nftId}`);
+
+    res.status(500).send("Error intern server (6).");
+  }
+});
+
+app.post("/api/check-new-coordinates", async (req, res) => {
+  try {
+    console.log(req.body);
+    const isGood = await startChecking(req.body);
+    console.log(isGood);
+    let success = false;
+    if (isGood) {
+      // Vérifiez la disponibilité de l'image Street View
+
+      success = true;
+    }
+    res.json({ success });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error intern server (6).");
+  }
+});
+
+app.post("/api/save-signature", async (req, res) => {
+  try {
+    // Enregistrez la signature dans le fichier signature.json
+    const signatureData = {
+      signature: req.body.signature,
+      timestamp: new Date().toISOString(),
+      id: req.body.id,
+    };
+
+    // Lisez le contenu actuel du fichier, s'il existe
+    let currentData = [];
+    if (fs.existsSync(path2)) {
+      const fileContent = fs.readFileSync(path2, "utf-8");
+      currentData = JSON.parse(fileContent);
+    }
+
+    // Ajoutez la nouvelle signature aux données existantes
+    currentData.push(signatureData);
+
+    // Écrivez les données mises à jour dans le fichier
+    fs.writeFileSync(path2, JSON.stringify(currentData, null, 2));
+
+    let success = false;
+    res.json({ success });
+  } catch (error) {
+    console.log(error);
+    sendTelegramMessage(`Internal Server Error (6`);
+
+    res.status(500).send("Internal Server Error (6).");
   }
 });
 

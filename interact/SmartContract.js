@@ -73,31 +73,20 @@ const createNft = async () => {
 
   // Get instance to encrypt amount parameter
   const instance = await getInstance();
-  const northLats = [];
-  const southLats = [];
 
-  const eastLons = [];
-
-  const westLons = [];
-
-  const longitudes = [];
-  // latitudes.push(instance.encrypt32());
-  // longitudes.push(instance.encrypt32(67639341));
+  const obj = [];
   jsonData.forEach((location) => {
-    northLats.push(instance.encrypt32(location.northLat));
-    southLats.push(instance.encrypt32(location.southLat));
-    eastLons.push(instance.encrypt32(location.eastLon));
-
-    westLons.push(instance.encrypt32(location.westLon));
+    obj.push(
+      instance.encrypt32(location.northLat),
+      instance.encrypt32(location.southLat),
+      instance.encrypt32(location.eastLon),
+      instance.encrypt32(location.westLon),
+      instance.encrypt32(location.lat),
+      instance.encrypt32(location.lng)
+    );
   });
-
-  const tx = await contract.createNFT(
-    northLats,
-    southLats,
-    eastLons,
-    westLons,
-    { gasLimit: 10000000 }
-  );
+  console.log(obj);
+  const tx = await contract.createNFT(obj, { gasLimit: 10000000 });
 
   /*const transaction = {
     from: signer.address, // Adresse de l'expéditeur

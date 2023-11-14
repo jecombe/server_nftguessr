@@ -212,9 +212,12 @@ function createSquareAroundPointWithDecimals(
     southLat: scaledSouthLat,
     eastLon: scaledEastLon,
     westLon: scaledWestLon,
+    lat: Math.trunc(latitude * 1e5),
+    lng: Math.trunc(longitude * 1e5),
   };
 }
-const id = 1;
+
+let id = 1;
 async function main() {
   const validLocations = [];
   while (validLocations.length < 5) {
@@ -240,6 +243,8 @@ async function main() {
           westLon: square.westLon,
           tax: 0,
           id,
+          lat: square.lat,
+          lng: square.lng,
         });
         id++;
         console.log(
@@ -260,13 +265,6 @@ async function main() {
   );
 }
 
-// main().catch((error) => {
-//   console.error("Une erreur s'est produite :", error);
-// });
-
-const square = createSquareAroundPointWithDecimals(
-  nearestRoad.lat,
-  nearestRoad.lng,
-  5
-);
-console.log(square);
+main().catch((error) => {
+  console.error("Une erreur s'est produite :", error);
+});
