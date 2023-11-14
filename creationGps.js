@@ -239,8 +239,6 @@ async function main(nb) {
     console.log("File does not exist or is empty. Initializing ID to 0.");
   }
 
-  console.log("MLLLLLLLLLLLLLL");
-
   let i = 0;
   while (i < nb) {
     const randomLocation = randomGeo();
