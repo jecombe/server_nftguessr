@@ -4,6 +4,7 @@ const axios = require("axios");
 const util = require("util");
 
 const writeFile = util.promisify(fs.writeFile);
+const readFile = util.promisify(fs.readFile);
 
 // Remplacez 'YOUR_API_KEY' par votre propre clé d'API Google Maps
 const googleMapsClient = require("@google/maps").createClient({
@@ -217,14 +218,35 @@ function createSquareAroundPointWithDecimals(
   };
 }
 
-let id = 1;
-async function main() {
-  const validLocations = [];
-  while (validLocations.length < 5) {
+async function main(nb) {
+  let id = 1;
+  let validLocations = [];
+  let locationsToAdd = []; // Nouveau tableau pour les données à ajouter dans rajout.json
+
+  try {
+    const fileContent = await readFile(
+      "./locations/validLocations.json",
+      "utf8"
+    );
+    const existingData = JSON.parse(fileContent);
+
+    if (existingData.length > 0) {
+      const lastLocation = existingData[existingData.length - 1];
+      id = lastLocation.id + 1;
+      validLocations = existingData;
+    }
+  } catch (error) {
+    console.log("File does not exist or is empty. Initializing ID to 0.");
+  }
+
+  console.log("MLLLLLLLLLLLLLL");
+
+  let i = 0;
+  while (i < nb) {
     const randomLocation = randomGeo();
     const nearestRoad = await findNearestRoad(randomLocation);
+
     if (nearestRoad) {
-      // Vérifiez la disponibilité de l'image Street View
       const hasStreetViewImage = await checkStreetViewImage(nearestRoad);
 
       if (hasStreetViewImage) {
@@ -233,6 +255,19 @@ async function main() {
           nearestRoad.lng,
           5
         );
+
+        locationsToAdd.push({
+          latitude: nearestRoad.lat,
+          longitude: nearestRoad.lng,
+          northLat: square.northLat,
+          southLat: square.southLat,
+          eastLon: square.eastLon,
+          westLon: square.westLon,
+          tax: 0,
+          id,
+          lat: square.lat,
+          lng: square.lng,
+        });
 
         validLocations.push({
           latitude: nearestRoad.lat,
@@ -246,7 +281,9 @@ async function main() {
           lat: square.lat,
           lng: square.lng,
         });
+
         id++;
+        i++;
         console.log(
           `Points GPS valides enregistrés : ${validLocations.length}`
         );
@@ -259,12 +296,43 @@ async function main() {
 
     await new Promise((resolve) => setTimeout(resolve, 500)); // Attendez 2 secondes
   }
+
+  // Écriture dans le fichier validLocations.json
   await writeFile(
     "./locations/validLocations.json",
     JSON.stringify(validLocations, null, 2)
   );
+
+  // Ajout uniquement des nouvelles données dans le fichier rajout.json
+  await writeFile(
+    "./locations/rajout.json",
+    JSON.stringify(locationsToAdd, null, 2)
+  );
 }
 
-main().catch((error) => {
+main(5).catch((error) => {
   console.error("Une erreur s'est produite :", error);
 });
+
+// const create = async () => {
+//   const lat = 41.0257788;
+//   const long = 28.9742018;
+//   const square = createSquareAroundPointWithDecimals(lat, long, 5);
+
+//   const r = {
+//     latitude: lat,
+//     longitude: long,
+//     northLat: square.northLat,
+//     southLat: square.southLat,
+//     eastLon: square.eastLon,
+//     westLon: square.westLon,
+//     tax: 0,
+//     id: 6,
+//     lat: square.lat,
+//     lng: square.lng,
+//   };
+
+//   console.log(`Points GPS valides enregistrés`, r);
+// };
+
+// create();

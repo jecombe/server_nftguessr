@@ -16,7 +16,7 @@ let _instance;
 const CONTRACT_ADDRESS = process.env.AMM;
 const sign = process.env.SECRET;
 // Charger le fichier JSON
-const rawData = fs.readFileSync("../locations/validLocations.json");
+const rawData = fs.readFileSync("../locations/rajout.json");
 const jsonData = JSON.parse(rawData);
 const getInstance = async () => {
   if (_instance) return _instance;
