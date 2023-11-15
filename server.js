@@ -52,6 +52,10 @@ const contract = new Contract(contractAddress, contractInfo, provider);
 // const nft = [];
 let nbCall = 0;
 
+// contract.on("GpsCheckResult", async (userAddress, result) => {
+//   console.log(userAddress, result);
+// });
+
 const sendTelegramMessage = (message) => {
   bot.sendMessage(TELEGRAM_CHAT_ID, JSON.stringify(message));
 };

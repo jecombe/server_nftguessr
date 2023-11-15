@@ -51,25 +51,11 @@ const changeThreshold = async () => {
   return transaction;
 };
 
-const convertCoordinate = (toConvert) => {
-  const nbStr = toConvert.toString().replace(".", "");
-  return parseInt(nbStr);
-};
-
 const createNft = async () => {
   const signer = new Wallet(sign, provider);
 
   // Initialize contract with ethers
   const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
-
-  // Maintenant, vous pouvez appeler la fonction checkGps depuis Node.js et surveiller l'événement GpsCheckResult
-  // Assurez-vous d'appeler la fonction avec les bonnes coordonnées utilisateur.
-  // Exemple :
-  // const userLatitude = ...; // Remplacez par la latitude de l'utilisateur
-  // const userLongitude = ...; // Remplacez par la longitude de l'utilisateur
-  // const transaction = await contract.checkGps(userLatitude, userLongitude);
-
-  // Notez que vous devez gérer les coordonnées utilisateur (userLatitude et userLongitude) correctement en tant que valeur encodée en bytes.
 
   // Get instance to encrypt amount parameter
   const instance = await getInstance();
@@ -88,22 +74,17 @@ const createNft = async () => {
   console.log(obj);
   const tx = await contract.createNFT(obj, { gasLimit: 10000000 });
 
-  /*const transaction = {
-    from: signer.address, // Adresse de l'expéditeur
-    to: contract.address, // Adresse du contrat
-    gasLimit: "10000000", // Limite de gaz (à personnaliser)
-    maxFeePerGas: parseUnits("200", "gwei"), // Max Fee Per Gas (à personnaliser)
-    maxPriorityFeePerGas: parseUnits("50", "gwei"), // Max Priority Fee Per Gas (à personnaliser)
-    data: contract.interface.encodeFunctionData("createNFT", [
-      northLats,
-      southLats,
-      eastLons,
-      westLons,
-    ]), // Encodage de la fonction du contrat et de ses paramètres
-  };
+  // const transaction = {
+  //   from: signer.address, // Adresse de l'expéditeur
+  //   to: contract.address, // Adresse du contrat
+  //   gasLimit: "10000000", // Limite de gaz (à personnaliser)
+  //   maxFeePerGas: parseUnits("200", "gwei"), // Max Fee Per Gas (à personnaliser)
+  //   maxPriorityFeePerGas: parseUnits("50", "gwei"), // Max Priority Fee Per Gas (à personnaliser)
+  //   data: contract.interface.encodeFunctionData("createNFT", [obj]), // Encodage de la fonction du contrat et de ses paramètres
+  // };
 
-  const tx = await signer.sendTransaction(transaction);
-*/
+  //const tx = await signer.sendTransaction(transaction);
+
   // const latitudes = [instance.encrypt32(456151904)]; // Remplacez par les latitudes souhaitées
   // const longitudes = [instance.encrypt32(67637934)]; // Remplacez par les longitudes souhaitées
 
