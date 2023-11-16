@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+
 const http = require("http"); // Ajoutez cette ligne
 const {
   Wallet,
@@ -17,7 +18,6 @@ const port = 8000;
 const CryptoJS = require("crypto-js");
 
 const contractInfo = require("./interact/abi/Geo.json");
-const server = http.createServer(app); // Remplacez app par server
 const TelegramBot = require("node-telegram-bot-api");
 const path = "./locations/validLocations.json";
 const path2 = "./locations/signature.json";
@@ -46,11 +46,11 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; //"6786879794:AAG_BSK
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
 const provider = new JsonRpcProvider(process.env.PROVIDER); // Remplacez par l'URL RPC Ethereum appropriée
-const contractAddress = process.env.CONTRACT; // Remplacez par l'adresse de votre contrat
+const signer = new Wallet(process.env.SECRET, provider);
+// Initialize contract with ethers
+const contractSign = new Contract(process.env.CONTRACT, contractInfo, signer);
 
-const contract = new Contract(contractAddress, contractInfo, provider);
 // const nft = [];
-let nbCall = 0;
 
 // contract.on("GpsCheckResult", async (userAddress, result) => {
 //   console.log(userAddress, result);
@@ -63,6 +63,77 @@ const sendTelegramMessage = (message) => {
 
 // Générer une clé de chiffrement et un vecteur d'initialisation (IV)
 // 128 bits pour un IV
+
+// Fonction pour écouter l'événement GpsCheckResult
+/*const listenToGpsCheckResultEvent = () => {
+  try {
+    // Créer un filtre pour l'événement GpsCheckResult
+    const filter = contract.filters.GpsCheckResult();
+
+    // Connecter un gestionnaire d'événements au filtre
+    contract.on(filter, (data) => {
+      console.log(data.args);
+      const userAddress = data.args[0];
+      const isSuccess = data.args[1];
+      const tokenId = data.args[2];
+
+      sendTelegramMessage({
+        message: `GpsCheckResult event received - User: ${userAddress}, Result: ${isSuccess}`,
+      });
+
+      // if (isSuccess === false) {
+      //   console.log("OOOOOOOOOOOOOOK", tokenId);
+      //   // Lire le fichier ValidLocations.json
+      //   const validLocationsData = fs.readFileSync(
+      //     "./locations/validLocations.json",
+      //     "utf-8"
+      //   );
+      //   const validLocations = JSON.parse(validLocationsData);
+
+      //   // Rechercher l'objet correspondant à tokenId
+      //   const index = validLocations.findIndex(
+      //     (location) => location.id === Number(tokenId)
+      //   );
+
+      //   console.log(index);
+
+      //   if (index !== -1) {
+      //     // Si l'objet est trouvé, le retirer de ValidLocations.json
+      //     const removedLocation = validLocations.splice(index, 1)[0];
+      //     console.log(removedLocation);
+
+      //     const saveLocationsData = fs.readFileSync(
+      //       "./locations/saveLocations.json",
+      //       "utf-8"
+      //     );
+      //     const saveLocations = JSON.parse(saveLocationsData);
+      //     saveLocations.push(removedLocation);
+
+      //     // Écrire les modifications dans les fichiers
+      //     fs.writeFileSync(
+      //       "./locations/validLocations.json",
+      //       JSON.stringify(validLocations, null, 2)
+      //     );
+      //     fs.writeFileSync(
+      //       "./locations/saveLocations.json",
+      //       JSON.stringify(saveLocations, null, 2)
+      //     );
+      //   } else {
+      //     sendTelegramMessage({
+      //       message: `GpsCheckResult event tokenId unknow - TokenId: ${tokenId}`,
+      //     });
+      //   }
+      // }
+    });
+
+    console.log("Event filter created successfully");
+  } catch (error) {
+    console.error("Error creating event filter:", error.message);
+  }
+};*/
+
+// Appeler la fonction pour écouter l'événement au démarrage du serveur
+//listenToGpsCheckResultEvent();
 
 function removeDuplicates(array) {
   return Array.from(new Set(array));
@@ -158,7 +229,6 @@ app.listen(port, () => {
 
 app.get("/api/get-gps", (req, res) => {
   try {
-    sendTelegramMessage({ message: "api get gps", numberCall: nbCall });
     const rawData = fs.readFileSync("./locations/validLocations.json");
     const randomLocations = JSON.parse(rawData);
     const randomIndex = Math.floor(Math.random() * randomLocations.length);
@@ -177,7 +247,6 @@ app.get("/api/get-gps", (req, res) => {
 app.get("/api/get-holder-and-token", async (req, res) => {
   try {
     const result = await contract.getNFTOwnersAndTokenIds();
-    console.log(result);
     const sendObj = await groupAddressesWithIds(result[0], result[1]);
     res.json(sendObj);
   } catch (error) {
@@ -246,13 +315,6 @@ app.post("/api/request-new-coordinates", async (req, res) => {
       res.status(401).json({ success: false, message: "Invalid signature" });
       return;
     }
-    const signer = new Wallet(process.env.SECRET, provider);
-    // Initialize contract with ethers
-    const contractSign = new Contract(
-      process.env.CONTRACT,
-      contractInfo,
-      signer
-    );
 
     const nb = await contractSign.getNFTLocation(nftId);
     const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
@@ -321,9 +383,8 @@ app.post("/api/request-new-coordinates", async (req, res) => {
 
 app.post("/api/check-new-coordinates", async (req, res) => {
   try {
-    console.log(req.body);
+    logger.info("check new coordinates", req.body);
     const isGood = await startChecking(req.body);
-    console.log(isGood);
     let success = false;
     if (isGood) {
       // Vérifiez la disponibilité de l'image Street View
