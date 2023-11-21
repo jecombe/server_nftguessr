@@ -16,11 +16,12 @@ const secretKey = "votre_clé_secrète";
 const port = 8000;
 const CryptoJS = require("crypto-js");
 
-const contractInfo = require("./interact/abi/Geo.json");
+const contractInfo = require("./interact/abi/NftGuessr.json");
 const server = http.createServer(app); // Remplacez app par server
 const TelegramBot = require("node-telegram-bot-api");
 const path = "./locations/validLocations.json";
 const path2 = "./locations/signature.json";
+const pathSave = "./locations/saveLocation.json";
 
 // ...
 const dotenv = require("dotenv");
@@ -52,8 +53,86 @@ const contract = new Contract(contractAddress, contractInfo, provider);
 // const nft = [];
 let nbCall = 0;
 
-// contract.on("GpsCheckResult", async (userAddress, result) => {
-//   console.log(userAddress, result);
+/*const filter = contract.filters.GpsCheckResult();
+
+// Abonnement à l'événement en utilisant le filtre
+const onEvent = async () => {
+  const events = await contract.queryFilter(filter);
+
+  // Gestion des événements ici
+  for (const event of events) {
+    const { userAddress, isWin, tokenId } = event.args;
+    console.log("Event:", userAddress, isWin, tokenId);
+
+    const token = Number(tokenId.toString());
+    console.log(userAddress, isWin, token);
+
+    if (!isWin) {
+      try {
+        // Lire le fichier validLocations.json
+        const validLocationsPath = path;
+        const rawData = fs.readFileSync(validLocationsPath);
+        const validLocations = JSON.parse(rawData);
+
+        // Trouver l'index de l'élément avec le tokenId dans le tableau validLocations
+        const indexToRemove = validLocations.findIndex(
+          (location) => location.id === token
+        );
+
+        if (indexToRemove !== -1) {
+          // Supprimer l'élément du tableau validLocations
+          validLocations.splice(indexToRemove, 1);
+
+          // Enregistrer les modifications dans le fichier saveLocation.json
+          const saveLocationsPath = pathSave;
+          fs.writeFileSync(
+            saveLocationsPath,
+            JSON.stringify(validLocations, null, 2)
+          );
+
+          console.log(
+            `Location with tokenId ${token} removed from validLocations.`
+          );
+        } else {
+          console.log(
+            `Location with tokenId ${token} not found in validLocations.`
+          );
+        }
+      } catch (error) {
+        console.error("Error updating validLocations:", error);
+      }
+    }
+
+    // Logique supplémentaire si isWin est true
+    if (isWin) {
+      // Votre logique ici
+      console.log("Winning event!");
+    }
+  }
+};
+
+// Abonnement à l'événement et gestion des erreurs
+contract.on("GpsCheckResult", onEvent).catch((error) => {
+  console.error("Error subscribing to GpsCheckResult event:", error);
+});
+
+// Désabonnement du filtre lorsque cela est nécessaire (par exemple, à la fin du programme ou lors de la suppression du gestionnaire d'événements)
+// Assurez-vous de gérer les erreurs lors de la désinscription
+const unsubscribe = async () => {
+  try {
+    await contract.off("GpsCheckResult", onEvent);
+    console.log("Unsubscribed from GpsCheckResult event");
+  } catch (error) {
+    console.error("Error unsubscribing from GpsCheckResult event:", error);
+  }
+};*/
+
+// contract.on("createNFT", async (userAddress, tokenId, fee) => {
+//   console.log(userAddress, tokenId, fee);
+// });
+
+// contract.on("ResetNFT", async (userAddress, tokenId, isReset) => {
+//   console.log(userAddress, tokenId, isReset);
 // });
 
 const sendTelegramMessage = (message) => {
@@ -68,40 +147,34 @@ function removeDuplicates(array) {
   return Array.from(new Set(array));
 }
 
-const groupAddressesWithIds = async (addresses, ids) => {
-  let result = {};
-  // Assurez-vous que les tableaux ont la même longueur
-  if (addresses.length !== ids.length) {
-    throw new Error(
-      "Les tableaux d'adresses et d'identifiants n'ont pas la même longueur."
-    );
-  }
-  const addrs = addresses.map((bn) => bn.toString());
-  const r = removeDuplicates(addrs);
+async function getAllAddressesAndTokenIds() {
+  const totalSupply = await contract.totalSupply();
 
-  for (let i = 0; i < r.length; i++) {
-    const address = r[i].toLowerCase(); // Utilisez .toLowerCase() pour normaliser les adresses
-    try {
-      const nftsStaked = await contract.getNFTsStakedByOwner(address);
-      const nftsReset = await contract.getNFTsResetByOwner(address);
-      const nfts = await contract.getNFTsByOwner(address);
-      const nftsResetNb = nftsReset.map((bn) => Number(bn.toString()));
-      const nftsStakedNb = nftsStaked.map((bn) => Number(bn.toString()));
-      const nftsNb = nfts.map((bn) => Number(bn.toString()));
+  const addressToTokenIds = {};
 
-      result[address] = {
-        owner: address,
-        nfts: nftsNb,
-        nftsStaked: nftsStakedNb,
-        nftsReset: nftsResetNb,
-        isAccess: false,
+  for (let i = 1; i <= totalSupply; i++) {
+    const currentOwner = await contract.ownerOf(i);
+    const nftsStake = await contract.getNFTsStakedByOwner(currentOwner);
+    const tokenId = i;
+
+    if (!addressToTokenIds[currentOwner]) {
+      addressToTokenIds[currentOwner] = {
+        nftsId: [],
+        nftsStake,
       };
-    } catch (error) {
-      logger.error("groupAddressesWithIds", error);
     }
+
+    addressToTokenIds[currentOwner].nftsId.push(tokenId);
+    //   // Votre logique pour déterminer si le NFT est staké ou non
+    //   const isStaked = await contract.isStaked(tokenId); // Remplacez par votre propre logique
+
+    //   if (isStaked) {
+    //     addressToTokenIds[currentOwner].nftsStake.push(tokenId);
+    //   }
   }
-  return result;
-};
+
+  return addressToTokenIds;
+}
 
 const authenticateToken = (req, res, next) => {
   const token = req.header("Authorization");
@@ -127,7 +200,7 @@ const authorizeRole = (role) => {
 
 const getTotalNft = async () => {
   try {
-    const totalNFTs = await contract.getTotalNFTs(); // Supposons que le contrat a une fonction pour obtenir le nombre total de NFTs
+    const totalNFTs = await contract.getTotalNft(); // Supposons que le contrat a une fonction pour obtenir le nombre total de NFTs
     return totalNFTs.toString();
   } catch (error) {
     logger.error("error getTotalNft", error);
@@ -176,9 +249,10 @@ app.get("/api/get-gps", (req, res) => {
 
 app.get("/api/get-holder-and-token", async (req, res) => {
   try {
-    const result = await contract.getNFTOwnersAndTokenIds();
-    const sendObj = await groupAddressesWithIds(result[0], result[1]);
-    res.json(sendObj);
+    const result = await getAllAddressesAndTokenIds();
+    res.json(result);
+    // const sendObj = await groupAddressesWithIds(result[0], result[1]);
+    //res.json(sendObj);
   } catch (error) {
     res.status(500).send("Error intern server (1).");
   }
@@ -204,7 +278,7 @@ app.get("/api/get-total-nft-stake", async (req, res) => {
 
 app.get("/api/get-minimum-nft-stake", async (req, res) => {
   try {
-    const nftsStake = await contract.nbNftStake();
+    const nftsStake = await contract.getNbStake();
     res.json(nftsStake.toString());
   } catch (error) {
     res.status(500).send("Error intern server (4).");
@@ -373,8 +447,7 @@ app.post("/api/reset-nft", async (req, res) => {
       const nftId = selectedNFTs[i];
       const feeInEth = Number(feesArray[i]);
 
-      const nftToUpdate = nftsData.find((nft) => nft.tokenId === nftId);
-
+      const nftToUpdate = nftsData.find((nft) => nft.id === nftId);
       if (nftToUpdate) {
         // Mettre à jour la propriété "tax" avec les nouveaux frais
         nftToUpdate.tax = feeInEth;
