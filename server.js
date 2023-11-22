@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const { createInstance } = require("fhevmjs");
+
 const app = express();
 const http = require("http"); // Ajoutez cette ligne
 const {
@@ -15,22 +17,23 @@ const jwt = require("jsonwebtoken");
 const secretKey = "votre_clé_secrète";
 const port = 8000;
 const CryptoJS = require("crypto-js");
-
+const { promisify } = require("util");
 const contractInfo = require("./interact/abi/NftGuessr.json");
 const TelegramBot = require("node-telegram-bot-api");
 const path = "./locations/validLocations.json";
-const path2 = "./locations/signature.json";
-//const pathSave = "./locations/saveLocation.json";
+const pathSave = "./locations/saveLocations.json";
 
 // ...
 const dotenv = require("dotenv");
 const log4js = require("log4js");
 const startChecking = require("./test");
+const readFileAsync = promisify(fs.readFile);
+const writeFileAsync = promisify(fs.writeFile);
 
 log4js.configure({
   appenders: {
     server: {
-      type: "file",
+      type: "console",
       filename: "server.log",
       layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
     },
@@ -51,6 +54,7 @@ const contractAddress = process.env.CONTRACT; // Remplacez par l'adresse de votr
 const contract = new Contract(contractAddress, contractInfo, provider);
 // const nft = [];
 let nbCall = 0;
+let _instance;
 
 /*const filter = contract.filters.GpsCheckResult();
 
@@ -303,34 +307,106 @@ app.get("/api/get-total-nft-reset", async (req, res) => {
   }
 });
 
-app.post("/api/request-new-coordinates", async (req, res) => {
-  const { nftId, signature } = req.body;
+app.post("/api/remove-gps", async (req, res) => {
+  const { nftId } = req.body;
 
+  let success = false;
   try {
-    sendTelegramMessage({ message: "new coordinate" });
+    // Lire le fichier saveLocations.json
+    const saveLocationsPath = pathSave;
+    let existingSaveData = [];
 
-    const signatureData = fs.readFileSync(path2, "utf-8");
-    const signatureList = JSON.parse(signatureData);
-    const validSignature = signatureList.some(
-      (entry) => entry.signature === signature
+    try {
+      // Tenter de lire le fichier
+      const rawDataSave = fs.readFileSync(saveLocationsPath);
+      existingSaveData = JSON.parse(rawDataSave);
+    } catch (readError) {
+      // Ignorer l'erreur si le fichier n'existe pas encore
+      logger.fatal("saveLocations.json does not exist yet.");
+    }
+
+    // Lire le fichier validLocations.json
+    const validLocationsPath = path;
+    const rawData = fs.readFileSync(validLocationsPath);
+    let validLocations = JSON.parse(rawData);
+
+    // Trouver l'index de l'élément avec le tokenId dans le tableau validLocations
+    const indexToRemove = validLocations.findIndex(
+      (location) => location.id === nftId
     );
-    if (!validSignature) {
-      res.status(401).json({ success: false, message: "Invalid signature" });
+
+    if (indexToRemove !== -1) {
+      // Créer un nouveau tableau avec seulement l'élément à supprimer
+      const locationToRemove = validLocations[indexToRemove];
+      locationToRemove.tax = 0;
+
+      // Ajouter l'élément au tableau existingSaveData
+      existingSaveData.push(locationToRemove);
+
+      // Enregistrer le tableau mis à jour dans le fichier saveLocations.json
+      fs.writeFileSync(
+        saveLocationsPath,
+        JSON.stringify(existingSaveData, null, 2)
+      );
+
+      logger.info(`Location with tokenId ${nftId} saved in saveLocations.`);
+
+      // Retirer l'élément du tableau validLocations
+      validLocations.splice(indexToRemove, 1);
+
+      // Enregistrer les modifications dans le fichier validLocations.json
+      fs.writeFileSync(
+        validLocationsPath,
+        JSON.stringify(validLocations, null, 2)
+      );
+
+      logger.info(
+        `Location with tokenId ${nftId} removed from validLocations.`
+      );
+      success = true;
+    } else {
+      logger.error(
+        `Location with tokenId ${nftId} not found in validLocations.`
+      );
+    }
+    res.json({ success });
+  } catch (error) {
+    logger.fatal("Error updating locations:", error);
+    res.status(500).send("Error intern server remove gps.");
+  }
+});
+app.post("/api/request-new-coordinates", async (req, res) => {
+  const { nftId, addressOwner } = req.body;
+  const signer = new Wallet(process.env.SECRET, provider);
+  // Initialize contract with ethers
+  const contractSign = new Contract(process.env.CONTRACT, contractInfo, signer);
+  try {
+    const data = await readFileAsync(path, "utf8");
+    // Parsez le contenu JSON
+    let contenuJSON;
+    try {
+      contenuJSON = JSON.parse(data);
+    } catch (error) {
+      logger.error("Erreur lors du parsing JSON :", error);
+      res.json({ success: false });
       return;
     }
-    const signer = new Wallet(process.env.SECRET, provider);
-    // Initialize contract with ethers
-    const contractSign = new Contract(
-      process.env.CONTRACT,
-      contractInfo,
-      signer
+
+    const indexToRemove = contenuJSON.findIndex(
+      (location) => location.id === nftId
     );
 
+    if (indexToRemove !== -1) {
+      res.json({ success: false });
+      return;
+    }
     const nb = await contractSign.getNFTLocation(nftId);
+    const fee = await contractSign.getFee(addressOwner, nftId);
+
     const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
 
-    const latitude = tableauNombres[5] / 1e5;
-    const longitude = tableauNombres[6] / 1e5;
+    const latitude = tableauNombres[4] / 1e5;
+    const longitude = tableauNombres[5] / 1e5;
     const toWrite = {
       latitude,
       longitude,
@@ -338,61 +414,26 @@ app.post("/api/request-new-coordinates", async (req, res) => {
       southLat: tableauNombres[1],
       eastLon: tableauNombres[2],
       westLon: tableauNombres[3],
-      tax: tableauNombres[4],
+      tax: Number(fee.toString()),
       id: nftId,
-      lat: tableauNombres[5],
-      lng: tableauNombres[6],
+      lat: tableauNombres[4],
+      lng: tableauNombres[5],
     };
-
-    fs.readFile(path, "utf8", (err, data) => {
-      if (err) {
-        logger.error("Erreur lors de la lecture du fichier :", err);
-        return;
-      }
-
-      // Parsez le contenu JSON
-      let contenuJSON;
-      try {
-        contenuJSON = JSON.parse(data);
-      } catch (error) {
-        logger.error("Erreur lors du parsing JSON :", err);
-        return;
-      }
-
-      // Ajoutez les nouvelles données au tableau existant
-      contenuJSON.push(toWrite);
-
-      // Convertissez le contenu modifié en JSON
-      const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
-
-      // Écrivez le nouveau contenu dans le fichier
-      fs.writeFile(path, nouveauContenuJSON, "utf8", (err) => {
-        if (err) {
-          logger.error("Erreur lors de l'écriture dans le fichier :", err);
-
-          sendTelegramMessage(
-            `Erreur lors de l'écriture dans le fichier ${nftId}`
-          );
-
-          res.json({ success: false });
-          return;
-        } else {
-          sendTelegramMessage(`save gps ${nftId}`);
-          logger.info("Données ajoutées avec succès :", err);
-        }
-      });
-    });
+    contenuJSON.push(toWrite);
+    const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
+    await writeFileAsync(path, nouveauContenuJSON, "utf8");
+    sendTelegramMessage(`save gps ${nftId}`);
     res.json({ success: true });
   } catch (error) {
-    logger.error("error interne server (6)", error);
-    sendTelegramMessage(`error gps ${nftId}`);
+    logger.fatal(`error save ${nftId}`, error);
     res.status(500).send("Error intern server (6).");
+    sendTelegramMessage(`error save gps ${nftId}`);
   }
 });
 
 app.post("/api/check-new-coordinates", async (req, res) => {
   try {
-    const isGood = await startChecking(req.body);
+    const isGood = await req.body;
     let success = false;
     if (isGood) success = true;
     res.json({ success });
@@ -402,64 +443,70 @@ app.post("/api/check-new-coordinates", async (req, res) => {
   }
 });
 
-app.post("/api/save-signature", async (req, res) => {
-  try {
-    // Enregistrez la signature dans le fichier signature.json
-    const signatureData = {
-      signature: req.body.signature,
-      timestamp: new Date().toISOString(),
-      id: req.body.id,
-    };
-
-    // Lisez le contenu actuel du fichier, s'il existe
-    let currentData = [];
-    if (fs.existsSync(path2)) {
-      const fileContent = fs.readFileSync(path2, "utf-8");
-      currentData = JSON.parse(fileContent);
-    }
-
-    // Ajoutez la nouvelle signature aux données existantes
-    currentData.push(signatureData);
-
-    // Écrivez les données mises à jour dans le fichier
-    fs.writeFileSync(path2, JSON.stringify(currentData, null, 2));
-
-    let success = false;
-    res.json({ success });
-  } catch (error) {
-    sendTelegramMessage(`Internal Server Error (6`);
-    logger.error("save signature", error);
-    res.status(500).send("Internal Server Error (6).");
-  }
-});
-
 app.post("/api/reset-nft", async (req, res) => {
+  const { nftId, fee } = req.body;
   try {
-    const { selectedNFTs, feesArray } = req.body;
-    sendTelegramMessage({ message: "RESET" });
+    // Lire le fichier saveLocations.json
+    const saveLocationsPath = pathSave;
+    const rawDataSave = fs.readFileSync(saveLocationsPath);
+    let saveLocations = JSON.parse(rawDataSave);
 
-    const rawData = fs.readFileSync(path);
-    const nftsData = JSON.parse(rawData);
+    // Trouver l'index de l'élément avec le tokenId dans le tableau saveLocations
+    const indexToRemove = saveLocations.findIndex(
+      (location) => location.id === 1
+    );
 
-    // Mettre à jour la taxe de chaque NFT en fonction de l'ID correspondant
-    for (let i = 0; i < selectedNFTs.length; i++) {
-      const nftId = selectedNFTs[i];
-      const feeInEth = Number(feesArray[i]);
+    if (indexToRemove !== -1) {
+      //const fee = contract.getFee(addressOwner, nftId);
+      // Créer un nouveau tableau avec seulement l'élément à supprimer
+      const locationToRemove = saveLocations[indexToRemove];
 
-      const nftToUpdate = nftsData.find((nft) => nft.id === nftId);
-      if (nftToUpdate) {
-        // Mettre à jour la propriété "tax" avec les nouveaux frais
-        nftToUpdate.tax = feeInEth;
+      locationToRemove.tax = Number(fee.toString());
+
+      // Enregistrer l'élément dans le fichier validLocations.json
+      const validLocationsPath = path;
+      let existingValidData = [];
+
+      try {
+        // Tenter de lire le fichier
+        const rawDataValid = fs.readFileSync(validLocationsPath);
+        existingValidData = JSON.parse(rawDataValid);
+      } catch (readError) {
+        // Ignorer l'erreur si le fichier n'existe pas encore
+        logger.error("validLocations.json does not exist yet.");
+        res.json({ success: false });
+        return;
       }
+
+      // Ajouter l'élément au tableau existingValidData
+      existingValidData.push(locationToRemove);
+
+      // Enregistrer le tableau mis à jour dans le fichier validLocations.json
+      fs.writeFileSync(
+        validLocationsPath,
+        JSON.stringify(existingValidData, null, 2)
+      );
+
+      logger.info(`Location with tokenId ${nftId} added to validLocations.`);
+
+      // Retirer l'élément du tableau saveLocations
+      saveLocations.splice(indexToRemove, 1);
+
+      // Enregistrer les modifications dans le fichier saveLocations.json
+      fs.writeFileSync(
+        saveLocationsPath,
+        JSON.stringify(saveLocations, null, 2)
+      );
+
+      logger.info(`Location with tokenId ${nftId} removed from saveLocations.`);
+      res.json({ success: true });
+    } else {
+      logger.error(
+        `Location with tokenId ${nftId} not found in saveLocations.`
+      );
+      res.json({ success: false });
     }
-
-    // Écrire les données mises à jour dans le fichier JSON
-    fs.writeFileSync(path, JSON.stringify(nftsData, null, 2));
-
-    // Send a response to the client if needed
-    res.json({ success: true });
   } catch (error) {
-    logger.error("Error handling reset-nft request:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    logger.fatal("Error updating locations:", error);
   }
 });
