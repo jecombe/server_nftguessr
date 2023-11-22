@@ -9,11 +9,12 @@ const {
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
-const contractInfo = require("./abi/NftGuessr.json");
+const contractInfo = require("./abi/Geo.json");
 
-const provider = new JsonRpcProvider("https://devnet.zama.ai/");
+const provider = new JsonRpcProvider(process.env.PROVIDER);
 let _instance;
-const CONTRACT_ADDRESS = process.env.AMM;
+const CONTRACT_ADDRESS = process.env.CONTRACT;
+console.log(CONTRACT_ADDRESS);
 const sign = process.env.SECRET;
 // Charger le fichier JSON
 const rawData = fs.readFileSync("../locations/rajout.json");
@@ -72,18 +73,19 @@ const createNft = async () => {
       instance.encrypt32(0)
     );
   });
-  const tx = await contract.createGpsOwner(obj, { gasLimit: 1000000000 });
+  console.log(obj);
+  const tx = await contract.createGpsOwner(obj, { gasLimit: 10000000 });
 
-  //   const transaction = {
-  //     from: signer.address, // Adresse de l'expéditeur
-  //     to: contract.address, // Adresse du contrat
-  //     gasLimit: "100000000", // Limite de gaz (à personnaliser)
-  //     maxFeePerGas: parseUnits("100", "gwei"), // Max Fee Per Gas (à personnaliser)
-  //     maxPriorityFeePerGas: parseUnits("50", "gwei"), // Max Priority Fee Per Gas (à personnaliser)
-  //     data: contract.interface.encodeFunctionData("createGpsOwner", [obj]), // Encodage de la fonction du contrat et de ses paramètres
-  //   };
+  // const transaction = {
+  //   from: signer.address, // Adresse de l'expéditeur
+  //   to: contract.address, // Adresse du contrat
+  //   gasLimit: "10000000", // Limite de gaz (à personnaliser)
+  //   maxFeePerGas: parseUnits("200", "gwei"), // Max Fee Per Gas (à personnaliser)
+  //   maxPriorityFeePerGas: parseUnits("50", "gwei"), // Max Priority Fee Per Gas (à personnaliser)
+  //   data: contract.interface.encodeFunctionData("createNFT", [obj]), // Encodage de la fonction du contrat et de ses paramètres
+  // };
 
-  //   const tx = await signer.sendTransaction(transaction);
+  //const tx = await signer.sendTransaction(transaction);
 
   // const latitudes = [instance.encrypt32(456151904)]; // Remplacez par les latitudes souhaitées
   // const longitudes = [instance.encrypt32(67637934)]; // Remplacez par les longitudes souhaitées

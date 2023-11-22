@@ -10,6 +10,56 @@
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "approved",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "ApprovalForAll",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "user",
 				"type": "address"
 			},
@@ -33,37 +83,6 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isReset",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "tax",
-				"type": "uint256"
-			}
-		],
-		"name": "NFTReset",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": true,
 				"internalType": "address",
 				"name": "from",
@@ -76,118 +95,99 @@
 				"type": "address"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
 			}
 		],
-		"name": "NFTTransfer",
+		"name": "Transfer",
 		"type": "event"
 	},
 	{
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
 			},
 			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			}
+		],
+		"name": "createNFT",
+		"type": "event"
+	},
+	{
+		"inputs": [
 			{
-				"indexed": true,
 				"internalType": "address",
 				"name": "to",
 				"type": "address"
-			}
-		],
-		"name": "NFTTransferred",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
+			},
 			{
-				"indexed": false,
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
 			}
 		],
-		"name": "NftClaimed",
-		"type": "event"
+		"name": "approve",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
-		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
 				"internalType": "address",
 				"name": "owner",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "nftCount",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "nftId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isStake",
-				"type": "bool"
 			}
 		],
-		"name": "NftCount",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
+		"name": "balanceOf",
+		"outputs": [
 			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isStake",
-				"type": "bool"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
-		"name": "isAccess",
-		"type": "event"
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "functionId",
+				"name": "tokenId",
 				"type": "uint256"
 			}
 		],
-		"name": "accessGeoNFTFunction",
+		"name": "burnNFT",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tokenIds",
+				"type": "uint256[]"
+			}
+		],
+		"name": "cancelResetNFT",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -201,24 +201,6 @@
 			}
 		],
 		"name": "changeFees",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "newTax",
-				"type": "uint256"
-			}
-		],
-		"name": "changeNFTTax",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -276,40 +258,51 @@
 	{
 		"inputs": [
 			{
+				"internalType": "bytes[]",
+				"name": "data",
+				"type": "bytes[]"
+			}
+		],
+		"name": "createGpsOwner",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes[]",
+				"name": "data",
+				"type": "bytes[]"
+			}
+		],
+		"name": "createGpsOwnerNft",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "claimNFT",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+		"name": "creatorNft",
+		"outputs": [
 			{
-				"internalType": "bytes[]",
-				"name": "data",
-				"type": "bytes[]"
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
-		"name": "createNFT",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes[]",
-				"name": "data",
-				"type": "bytes[]"
-			}
-		],
-		"name": "createNftForOwner",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -326,19 +319,18 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			}
-		],
-		"name": "getHasStakedEnoughNFTs",
+		"inputs": [],
+		"name": "getAllAddressesAndTokenIds",
 		"outputs": [
 			{
-				"internalType": "bool",
+				"internalType": "address[]",
 				"name": "",
-				"type": "bool"
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[][]",
+				"name": "",
+				"type": "uint256[][]"
 			}
 		],
 		"stateMutability": "view",
@@ -352,67 +344,36 @@
 				"type": "uint256"
 			}
 		],
-		"name": "getNFTLocation",
+		"name": "getApproved",
 		"outputs": [
 			{
-				"components": [
-					{
-						"internalType": "uint32",
-						"name": "northLat",
-						"type": "uint32"
-					},
-					{
-						"internalType": "uint32",
-						"name": "southLat",
-						"type": "uint32"
-					},
-					{
-						"internalType": "uint32",
-						"name": "eastLon",
-						"type": "uint32"
-					},
-					{
-						"internalType": "uint32",
-						"name": "westLon",
-						"type": "uint32"
-					},
-					{
-						"internalType": "uint256",
-						"name": "tax",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "lat",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "lng",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct NftGuessr.NFTLocation",
+				"internalType": "address",
 				"name": "",
-				"type": "tuple"
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "getNFTOwnersAndTokenIds",
-		"outputs": [
+		"inputs": [
 			{
-				"internalType": "address[]",
-				"name": "",
-				"type": "address[]"
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
 			},
 			{
-				"internalType": "uint256[]",
+				"internalType": "bytes32",
+				"name": "publicKey",
+				"type": "bytes32"
+			}
+		],
+		"name": "getLocation",
+		"outputs": [
+			{
+				"internalType": "bytes[6]",
 				"name": "",
-				"type": "uint256[]"
+				"type": "bytes[6]"
 			}
 		],
 		"stateMutability": "view",
@@ -422,12 +383,17 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "_owner",
+				"name": "user",
 				"type": "address"
 			}
 		],
-		"name": "getNFTsByOwner",
+		"name": "getNFTsAndFeesByOwner",
 		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			},
 			{
 				"internalType": "uint256[]",
 				"name": "",
@@ -477,20 +443,7 @@
 	},
 	{
 		"inputs": [],
-		"name": "getName",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getNextTokenId",
+		"name": "getNbStake",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -502,13 +455,19 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "getSymbol",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "getOwnedNFTs",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "uint256[]",
 				"name": "",
-				"type": "string"
+				"type": "uint256[]"
 			}
 		],
 		"stateMutability": "view",
@@ -516,20 +475,7 @@
 	},
 	{
 		"inputs": [],
-		"name": "getTotalNFTs",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getTotalResetNFTs",
+		"name": "getTotalNft",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -557,11 +503,16 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
 				"type": "address"
 			}
 		],
-		"name": "hasStakedEnoughNFTs",
+		"name": "isApprovedForAll",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -600,12 +551,12 @@
 	},
 	{
 		"inputs": [],
-		"name": "nextTokenId",
+		"name": "owner",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "address",
 				"name": "",
-				"type": "uint256"
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -613,117 +564,13 @@
 	},
 	{
 		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "nfts",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"components": [
-					{
-						"internalType": "euint32",
-						"name": "northLat",
-						"type": "uint256"
-					},
-					{
-						"internalType": "euint32",
-						"name": "southLat",
-						"type": "uint256"
-					},
-					{
-						"internalType": "euint32",
-						"name": "eastLon",
-						"type": "uint256"
-					},
-					{
-						"internalType": "euint32",
-						"name": "westLon",
-						"type": "uint256"
-					},
-					{
-						"internalType": "euint32",
-						"name": "lat",
-						"type": "uint256"
-					},
-					{
-						"internalType": "euint32",
-						"name": "lng",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct NftGuessr.Location",
-				"name": "location",
-				"type": "tuple"
-			},
-			{
-				"internalType": "bool",
-				"name": "claimed",
-				"type": "bool"
-			},
 			{
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "isStaked",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "isReset",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tax",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "nftsByOwner",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
+		"name": "ownerOf",
 		"outputs": [
 			{
 				"internalType": "address",
@@ -778,7 +625,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "resetNFTsByOwner",
+		"name": "resetNft",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -792,17 +639,68 @@
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
 				"internalType": "uint256",
 				"name": "tokenId",
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
-				"name": "newTax",
-				"type": "uint256"
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
 			}
 		],
-		"name": "setTax",
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
+			}
+		],
+		"name": "setApprovalForAll",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -821,6 +719,30 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "stakeNft",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "stakedNFTCount",
 		"outputs": [
@@ -836,22 +758,17 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
 			}
 		],
-		"name": "stakedNFTsByOwner",
+		"name": "supportsInterface",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bool",
 				"name": "",
-				"type": "uint256"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -873,13 +790,111 @@
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenByIndex",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenOfOwnerByIndex",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenURI",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
 				"internalType": "address",
 				"name": "to",
 				"type": "address"
 			},
 			{
 				"internalType": "uint256",
-				"name": "nftIndex",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
 				"type": "uint256"
 			}
 		],
@@ -902,10 +917,27 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "withdraw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "userFees",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
