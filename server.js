@@ -17,11 +17,10 @@ const port = 8000;
 const CryptoJS = require("crypto-js");
 
 const contractInfo = require("./interact/abi/NftGuessr.json");
-const server = http.createServer(app); // Remplacez app par server
 const TelegramBot = require("node-telegram-bot-api");
 const path = "./locations/validLocations.json";
 const path2 = "./locations/signature.json";
-const pathSave = "./locations/saveLocation.json";
+//const pathSave = "./locations/saveLocation.json";
 
 // ...
 const dotenv = require("dotenv");
