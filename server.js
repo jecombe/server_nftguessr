@@ -42,6 +42,7 @@ const logger = log4js.getLogger();
 dotenv.config();
 
 // Middleware d'authentification
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; //"6786879794:AAG_BSKbY9h5vv-c01PWc1zIs4dKT9hWk0o";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
