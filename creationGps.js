@@ -308,9 +308,17 @@ async function main(nb) {
   );
 }
 
-main(5).catch((error) => {
-  console.error("Une erreur s'est produite :", error);
-});
+const start = async (nb) => {
+  await main(nb);
+  //const resp = await createNft();
+  //console.log(resp);
+};
+
+start(2);
+
+// main(2).catch((error) => {
+//   console.error("Une erreur s'est produite :", error);
+// });
 
 // const create = async () => {
 //   const lat = 41.0257788;
