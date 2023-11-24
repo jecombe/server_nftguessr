@@ -154,26 +154,43 @@ async function getAllAddressesAndTokenIds() {
   const totalSupply = await contract.totalSupply();
 
   const addressToTokenIds = {};
-
+  let isOwner = false;
   for (let i = 1; i <= totalSupply; i++) {
     const currentOwner = await contract.ownerOf(i);
     const nftsStake = await contract.getNFTsStakedByOwner(currentOwner);
     const tokenId = i;
+    const addrStake = await contract.getAddressStakeWithToken(tokenId);
+    const addrReset = await contract.getAddressResetWithToken(tokenId);
 
     if (!addressToTokenIds[currentOwner]) {
       addressToTokenIds[currentOwner] = {
         nftsId: [],
         nftsStake,
+        nftsReset: [],
       };
     }
-
-    addressToTokenIds[currentOwner].nftsId.push(tokenId);
-    //   // Votre logique pour déterminer si le NFT est staké ou non
-    //   const isStaked = await contract.isStaked(tokenId); // Remplacez par votre propre logique
-
-    //   if (isStaked) {
-    //     addressToTokenIds[currentOwner].nftsStake.push(tokenId);
-    //   }
+    if (addrStake !== "0x0000000000000000000000000000000000000000") {
+      if (!addressToTokenIds[addrStake]) {
+        addressToTokenIds[addrStake] = {
+          nftsId: [],
+          nftsStake: [],
+          nftsReset: [],
+        };
+        addressToTokenIds[addrStake].nftsStake.push(tokenId);
+        isOwner = true;
+      }
+    }
+    if (addrReset !== "0x0000000000000000000000000000000000000000") {
+      if (!addressToTokenIds[addrReset]) {
+        addressToTokenIds[addrReset] = {
+          nftsId: [],
+          nftsStake: [],
+          nftsReset: [],
+        };
+        addressToTokenIds[addrReset].nftsReset.push(tokenId);
+      }
+    }
+    if (!isOwner) addressToTokenIds[currentOwner].nftsId.push(tokenId);
   }
 
   return addressToTokenIds;

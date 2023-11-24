@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "latitude": 44.6158302,
+    "longitude": 9.4060185,
+    "northLat": 4463828,
+    "southLat": 4459337,
+    "eastLon": 942847,
+    "westLon": 938356,
+    "tax": 0,
+    "id": 1,
+    "lat": 4461583,
+    "lng": 940601
+  }
+]
