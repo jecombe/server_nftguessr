@@ -26,7 +26,6 @@ const pathSave = "./locations/saveLocations.json";
 // ...
 const dotenv = require("dotenv");
 const log4js = require("log4js");
-const startChecking = require("./test");
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
@@ -153,7 +152,8 @@ function removeDuplicates(array) {
 async function getAllAddressesAndTokenIds() {
   const totalSupply = await contract.totalSupply();
 
-  const addressToTokenIds = {};
+  let addressToTokenIds = {};
+
   let isOwner = false;
   for (let i = 1; i <= totalSupply; i++) {
     const currentOwner = await contract.ownerOf(i);
@@ -180,6 +180,7 @@ async function getAllAddressesAndTokenIds() {
         isOwner = true;
       }
     }
+
     if (addrReset !== "0x0000000000000000000000000000000000000000") {
       if (!addressToTokenIds[addrReset]) {
         addressToTokenIds[addrReset] = {
@@ -187,10 +188,10 @@ async function getAllAddressesAndTokenIds() {
           nftsStake: [],
           nftsReset: [],
         };
-        addressToTokenIds[addrReset].nftsReset.push(tokenId);
       }
+      addressToTokenIds[addrReset].nftsReset.push(tokenId);
     }
-    if (!isOwner) addressToTokenIds[currentOwner].nftsId.push(tokenId);
+    addressToTokenIds[currentOwner].nftsId.push(tokenId);
   }
 
   return addressToTokenIds;
