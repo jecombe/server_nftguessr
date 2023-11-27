@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "latitude": 44.6158302,
+    "longitude": 9.4060185,
+    "northLat": 4463828,
+    "southLat": 4459337,
+    "eastLon": 942847,
+    "westLon": 938356,
+    "tax": 0,
+    "id": 1,
+    "lat": 4461583,
+    "lng": 940601
+  },
+  {
+    "latitude": 54.7803498,
+    "longitude": 9.3776192,
+    "northLat": 5480280,
+    "southLat": 5475789,
+    "eastLon": 940007,
+    "westLon": 935516,
+    "tax": 0,
+    "id": 2,
+    "lat": 5478034,
+    "lng": 937761
+  },
+  {
+    "latitude": 50.7888507,
+    "longitude": 11.8946206,
+    "northLat": 5081130,
+    "southLat": 5076639,
+    "eastLon": 1191707,
+    "westLon": 1187216,
+    "tax": 0,
+    "id": 3,
+    "lat": 5078885,
+    "lng": 1189462
+  }
+]

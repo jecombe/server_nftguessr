@@ -250,10 +250,11 @@ app.listen(port, () => {
   logger.info(`Server is listening on port ${port}`);
 });
 
-app.get("/api/get-gps", (req, res) => {
+app.get("/api/get-gps", async (req, res) => {
   try {
     sendTelegramMessage({ message: "api get gps", numberCall: nbCall });
-    const rawData = fs.readFileSync("./locations/validLocations.json");
+    const rawData = await readFileAsync("./locations/validLocations.json");
+
     const randomLocations = JSON.parse(rawData);
     const randomIndex = Math.floor(Math.random() * randomLocations.length);
     const randomCoordinates = randomLocations[randomIndex];
@@ -336,7 +337,8 @@ app.post("/api/remove-gps", async (req, res) => {
 
     try {
       // Tenter de lire le fichier
-      const rawDataSave = fs.readFileSync(saveLocationsPath);
+      const rawDataSave = await readFileAsync(saveLocationsPath);
+
       existingSaveData = JSON.parse(rawDataSave);
     } catch (readError) {
       // Ignorer l'erreur si le fichier n'existe pas encore
@@ -345,7 +347,8 @@ app.post("/api/remove-gps", async (req, res) => {
 
     // Lire le fichier validLocations.json
     const validLocationsPath = path;
-    const rawData = fs.readFileSync(validLocationsPath);
+    const rawData = await readFileAsync(validLocationsPath);
+
     let validLocations = JSON.parse(rawData);
 
     // Trouver l'index de l'élément avec le tokenId dans le tableau validLocations
@@ -362,9 +365,11 @@ app.post("/api/remove-gps", async (req, res) => {
       existingSaveData.push(locationToRemove);
 
       // Enregistrer le tableau mis à jour dans le fichier saveLocations.json
-      fs.writeFileSync(
+
+      await writeFileAsync(
         saveLocationsPath,
-        JSON.stringify(existingSaveData, null, 2)
+        JSON.stringify(existingSaveData, null, 2),
+        "utf8"
       );
 
       logger.info(`Location with tokenId ${nftId} saved in saveLocations.`);
@@ -373,9 +378,11 @@ app.post("/api/remove-gps", async (req, res) => {
       validLocations.splice(indexToRemove, 1);
 
       // Enregistrer les modifications dans le fichier validLocations.json
-      fs.writeFileSync(
+
+      await writeFileAsync(
         validLocationsPath,
-        JSON.stringify(validLocations, null, 2)
+        JSON.stringify(validLocations, null, 2),
+        "utf8"
       );
 
       logger.info(
@@ -466,7 +473,8 @@ app.post("/api/reset-nft", async (req, res) => {
   try {
     // Lire le fichier saveLocations.json
     const saveLocationsPath = pathSave;
-    const rawDataSave = fs.readFileSync(saveLocationsPath);
+    const rawDataSave = await readFileAsync(saveLocationsPath, "utf8");
+
     let saveLocations = JSON.parse(rawDataSave);
 
     // Trouver l'index de l'élément avec le tokenId dans le tableau saveLocations
@@ -487,7 +495,8 @@ app.post("/api/reset-nft", async (req, res) => {
 
       try {
         // Tenter de lire le fichier
-        const rawDataValid = fs.readFileSync(validLocationsPath);
+        const rawDataValid = await readFileAsync(validLocationsPath);
+
         existingValidData = JSON.parse(rawDataValid);
       } catch (readError) {
         // Ignorer l'erreur si le fichier n'existe pas encore
@@ -500,9 +509,11 @@ app.post("/api/reset-nft", async (req, res) => {
       existingValidData.push(locationToRemove);
 
       // Enregistrer le tableau mis à jour dans le fichier validLocations.json
-      fs.writeFileSync(
+
+      await writeFileAsync(
         validLocationsPath,
-        JSON.stringify(existingValidData, null, 2)
+        JSON.stringify(existingValidData, null, 2),
+        "utf8"
       );
 
       logger.info(`Location with tokenId ${nftId} added to validLocations.`);
@@ -511,9 +522,11 @@ app.post("/api/reset-nft", async (req, res) => {
       saveLocations.splice(indexToRemove, 1);
 
       // Enregistrer les modifications dans le fichier saveLocations.json
-      fs.writeFileSync(
+
+      await writeFileAsync(
         saveLocationsPath,
-        JSON.stringify(saveLocations, null, 2)
+        JSON.stringify(saveLocations, null, 2),
+        "utf8"
       );
 
       logger.info(`Location with tokenId ${nftId} removed from saveLocations.`);
