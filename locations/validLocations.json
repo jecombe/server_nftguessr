@@ -24,6 +24,18 @@
     "lng": 937761
   },
   {
+    "latitude": 50.7888507,
+    "longitude": 11.8946206,
+    "northLat": 5081130,
+    "southLat": 5076639,
+    "eastLon": 1191707,
+    "westLon": 1187216,
+    "tax": 0,
+    "id": 3,
+    "lat": 5078885,
+    "lng": 1189462
+  },
+  {
     "latitude": 59.41825189999999,
     "longitude": 26.2149682,
     "northLat": 5944070,
