@@ -1,5 +1,17 @@
 [
   {
+    "latitude": 44.6158302,
+    "longitude": 9.4060185,
+    "northLat": 4463828,
+    "southLat": 4459337,
+    "eastLon": 942847,
+    "westLon": 938356,
+    "tax": 0,
+    "id": 1,
+    "lat": 4461583,
+    "lng": 940601
+  },
+  {
     "latitude": 54.7803498,
     "longitude": 9.3776192,
     "northLat": 5480280,
@@ -48,6 +60,18 @@
     "lng": 2109815
   },
   {
+    "latitude": 52.5173538,
+    "longitude": 13.3951083,
+    "northLat": 5253981,
+    "southLat": 5249489,
+    "eastLon": 1341756,
+    "westLon": 1337265,
+    "tax": 0,
+    "id": 6,
+    "lat": 5251735,
+    "lng": 1339510
+  },
+  {
     "latitude": 52.368834,
     "longitude": 4.8892019,
     "northLat": 5239129,
@@ -94,17 +118,5 @@
     "id": 10,
     "lat": 4102577,
     "lng": 2897420
-  },
-  {
-    "latitude": 44.6158302,
-    "longitude": 9.4060185,
-    "northLat": 4463828,
-    "southLat": 4459337,
-    "eastLon": 942847,
-    "westLon": 938356,
-    "tax": 2,
-    "id": 1,
-    "lat": 4461583,
-    "lng": 940601
   }
 ]
