@@ -208,7 +208,7 @@ app.get("/api/get-gps", async (req, res) => {
     res.json(ciphertext);
     logger.info(`get-gps ${randomCoordinates.id}`);
   } catch (error) {
-    logger.error(`get-gps ${randomCoordinates.id}`, error);
+    logger.error(`get-gps`, error);
     res.status(500).send("Error intern server (0).");
   }
 });
@@ -368,7 +368,7 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
     await writeFileAsync(path, nouveauContenuJSON, "utf8");
     res.json({ success: true });
-    logger.info(`get gps ${nftId}`, error);
+    logger.info(`get gps ${nftId}`);
     sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
   } catch (error) {
     logger.fatal(`request-new-coordinates ${nftId}`, error);
