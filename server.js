@@ -196,7 +196,6 @@ app.listen(port, () => {
 
 app.get("/api/get-gps", async (req, res) => {
   try {
-    sendTelegramMessage({ message: "api get gps" });
     const rawData = await readFileAsync("./locations/validLocations.json");
 
     const randomLocations = JSON.parse(rawData);
