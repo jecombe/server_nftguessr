@@ -1,31 +1,20 @@
 const express = require("express");
 const cors = require("cors");
-const { createInstance } = require("fhevmjs");
 
 const app = express();
-const http = require("http"); // Ajoutez cette ligne
-const {
-  Wallet,
-  JsonRpcProvider,
-  Contract,
-  parseEther,
-  parseUnits,
-  formatEther,
-} = require("ethers");
+const { Wallet, JsonRpcProvider, Contract, formatEther } = require("ethers");
 const fs = require("fs");
-const jwt = require("jsonwebtoken");
-const secretKey = "votre_clé_secrète";
 const port = 8000;
 const CryptoJS = require("crypto-js");
 const { promisify } = require("util");
-const contractInfo = require("./interact/abi/NftGuessr.json");
+const contractInfo = require("./abi/NftGuessr.json");
 const TelegramBot = require("node-telegram-bot-api");
 const path = "./locations/validLocations.json";
 const pathSave = "./locations/saveLocations.json";
 
-// ...
 const dotenv = require("dotenv");
 const log4js = require("log4js");
+
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
@@ -33,7 +22,7 @@ log4js.configure({
   appenders: {
     server: {
       type: "file",
-      filename: "server.log",
+      filename: "./logs/server.log",
       layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
     },
   },
@@ -43,17 +32,13 @@ log4js.configure({
 const logger = log4js.getLogger();
 dotenv.config();
 
-// Middleware d'authentification
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; //"6786879794:AAG_BSKbY9h5vv-c01PWc1zIs4dKT9hWk0o";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
-const provider = new JsonRpcProvider(process.env.PROVIDER); // Remplacez par l'URL RPC Ethereum appropriée
-const contractAddress = process.env.CONTRACT; // Remplacez par l'adresse de votre contrat
+const provider = new JsonRpcProvider(process.env.PROVIDER);
+const contractAddress = process.env.CONTRACT;
 
 const contract = new Contract(contractAddress, contractInfo, provider);
-// const nft = [];
-let nbCall = 0;
-let _instance;
 
 /*const filter = contract.filters.GpsCheckResult();
 
@@ -140,21 +125,12 @@ const unsubscribe = async () => {
 const sendTelegramMessage = (message) => {
   bot.sendMessage(TELEGRAM_CHAT_ID, JSON.stringify(message));
 };
-// sendTelegramMessage("get GPS");
-
-// Générer une clé de chiffrement et un vecteur d'initialisation (IV)
-// 128 bits pour un IV
-
-function removeDuplicates(array) {
-  return Array.from(new Set(array));
-}
 
 async function getAllAddressesAndTokenIds() {
   const totalSupply = await contract.totalSupply();
 
   let addressToTokenIds = {};
 
-  let isOwner = false;
   for (let i = 1; i <= totalSupply; i++) {
     const currentOwner = await contract.ownerOf(i);
     const nftsStake = await contract.getNFTsStakedByOwner(currentOwner);
@@ -197,31 +173,9 @@ async function getAllAddressesAndTokenIds() {
   return addressToTokenIds;
 }
 
-const authenticateToken = (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) return res.status(401).send("Accès refusé");
-
-  jwt.verify(token, secretKey, (err, user) => {
-    if (err) return res.status(403).send("Token non valide");
-    req.user = user;
-    next();
-  });
-};
-
-// Middleware de contrôle d'autorisation
-const authorizeRole = (role) => {
-  return (req, res, next) => {
-    if (req.user && req.user.role === role) {
-      next();
-    } else {
-      res.status(403).send("Accès refusé");
-    }
-  };
-};
-
 const getTotalNft = async () => {
   try {
-    const totalNFTs = await contract.getTotalNft(); // Supposons que le contrat a une fonction pour obtenir le nombre total de NFTs
+    const totalNFTs = await contract.getTotalNft();
     return totalNFTs.toString();
   } catch (error) {
     logger.error("error getTotalNft", error);
@@ -230,21 +184,9 @@ const getTotalNft = async () => {
   }
 };
 
-// Utilisation du middleware cors pour autoriser les requêtes CORS
 app.use(cors());
-// Assurez-vous d'utiliser express.json() pour gérer les données JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Exemple d'une route sécurisée avec authentification et autorisation
-app.get(
-  "/api/secure-route",
-  authenticateToken,
-  authorizeRole("admin"),
-  (req, res) => {
-    res.json({ message: "Accès autorisé à la route sécurisée" });
-  }
-);
 
 app.listen(port, () => {
   logger.info(`Server is listening on port ${port}`);
@@ -252,7 +194,7 @@ app.listen(port, () => {
 
 app.get("/api/get-gps", async (req, res) => {
   try {
-    sendTelegramMessage({ message: "api get gps", numberCall: nbCall });
+    sendTelegramMessage({ message: "api get gps" });
     const rawData = await readFileAsync("./locations/validLocations.json");
 
     const randomLocations = JSON.parse(rawData);
@@ -263,8 +205,9 @@ app.get("/api/get-gps", async (req, res) => {
       process.env.KEY
     ).toString();
     res.json(ciphertext);
+    logger.info(`get-gps ${randomCoordinates.id}`);
   } catch (error) {
-    logger.error("Error read file JSON.", error);
+    logger.error(`get-gps ${randomCoordinates.id}`, error);
     res.status(500).send("Error intern server (0).");
   }
 });
@@ -273,9 +216,10 @@ app.get("/api/get-holder-and-token", async (req, res) => {
   try {
     const result = await getAllAddressesAndTokenIds();
     res.json(result);
-    // const sendObj = await groupAddressesWithIds(result[0], result[1]);
-    //res.json(sendObj);
+    logger.info("get-holder-and-token");
   } catch (error) {
+    logger.error("get-holder-and-token.", error);
+
     res.status(500).send("Error intern server (1).");
   }
 });
@@ -284,7 +228,9 @@ app.get("/api/get-total-nft", async (req, res) => {
   try {
     const holdersAndTokenIds = await getTotalNft();
     res.json(holdersAndTokenIds);
+    logger.info("get-total-nft");
   } catch (error) {
+    logger.error("get-total-nft.", error);
     res.status(500).send("Error intern server (2).");
   }
 });
@@ -293,7 +239,9 @@ app.get("/api/get-total-nft-stake", async (req, res) => {
   try {
     const nftsStake = await contract.getTotalStakedNFTs();
     res.json(nftsStake.toString());
+    logger.info("get-total-nft-stake.");
   } catch (error) {
+    logger.error("get-total-nft-stake.", error);
     res.status(500).send("Error intern server (3).");
   }
 });
@@ -302,7 +250,9 @@ app.get("/api/get-minimum-nft-stake", async (req, res) => {
   try {
     const nftsStake = await contract.getNbStake();
     res.json(nftsStake.toString());
+    logger.info("get-minimum-nft-stake.");
   } catch (error) {
+    logger.error("get-minimum-nft-stake", error);
     res.status(500).send("Error intern server (4).");
   }
 });
@@ -312,7 +262,9 @@ app.get("/api/get-fees", async (req, res) => {
     const nftsStake = await contract.fees();
     const rep = Math.round(formatEther(nftsStake));
     res.json(rep.toString());
+    logger.info("get-fees");
   } catch (error) {
+    logger.error("get-fees", error);
     res.status(500).send("Error intern server (5).");
   }
 });
@@ -321,70 +273,43 @@ app.get("/api/get-total-nft-reset", async (req, res) => {
   try {
     const nftsStake = await contract.getTotalResetNFTs();
     res.json(nftsStake.toString());
+    logger.info("get-total-nft-reset.");
   } catch (error) {
+    logger.error("get-total-nft-reset", error);
     res.status(500).send("Error intern server (6).");
   }
 });
 
 app.post("/api/remove-gps", async (req, res) => {
   const { nftId } = req.body;
-
   let success = false;
   try {
-    // Lire le fichier saveLocations.json
     const saveLocationsPath = pathSave;
     let existingSaveData = [];
-
-    try {
-      // Tenter de lire le fichier
-      const rawDataSave = await readFileAsync(saveLocationsPath);
-
-      existingSaveData = JSON.parse(rawDataSave);
-    } catch (readError) {
-      // Ignorer l'erreur si le fichier n'existe pas encore
-      logger.fatal("saveLocations.json does not exist yet.");
-    }
-
-    // Lire le fichier validLocations.json
+    const rawDataSave = await readFileAsync(saveLocationsPath);
+    existingSaveData = JSON.parse(rawDataSave);
     const validLocationsPath = path;
     const rawData = await readFileAsync(validLocationsPath);
-
     let validLocations = JSON.parse(rawData);
-
-    // Trouver l'index de l'élément avec le tokenId dans le tableau validLocations
     const indexToRemove = validLocations.findIndex(
       (location) => location.id === nftId
     );
-
     if (indexToRemove !== -1) {
-      // Créer un nouveau tableau avec seulement l'élément à supprimer
       const locationToRemove = validLocations[indexToRemove];
       locationToRemove.tax = 0;
-
-      // Ajouter l'élément au tableau existingSaveData
       existingSaveData.push(locationToRemove);
-
-      // Enregistrer le tableau mis à jour dans le fichier saveLocations.json
-
       await writeFileAsync(
         saveLocationsPath,
         JSON.stringify(existingSaveData, null, 2),
         "utf8"
       );
-
       logger.info(`Location with tokenId ${nftId} saved in saveLocations.`);
-
-      // Retirer l'élément du tableau validLocations
       validLocations.splice(indexToRemove, 1);
-
-      // Enregistrer les modifications dans le fichier validLocations.json
-
       await writeFileAsync(
         validLocationsPath,
         JSON.stringify(validLocations, null, 2),
         "utf8"
       );
-
       logger.info(
         `Location with tokenId ${nftId} removed from validLocations.`
       );
@@ -396,26 +321,20 @@ app.post("/api/remove-gps", async (req, res) => {
     }
     res.json({ success });
   } catch (error) {
-    logger.fatal("Error updating locations:", error);
+    logger.fatal(`Error updating locations: ${nftId}`, error);
+    sendTelegramMessage({ message: `Error updating locations: ${nftId}` });
     res.status(500).send("Error intern server remove gps.");
   }
 });
+
 app.post("/api/request-new-coordinates", async (req, res) => {
   const { nftId, addressOwner } = req.body;
   const signer = new Wallet(process.env.SECRET, provider);
-  // Initialize contract with ethers
   const contractSign = new Contract(process.env.CONTRACT, contractInfo, signer);
   try {
     const data = await readFileAsync(path, "utf8");
-    // Parsez le contenu JSON
     let contenuJSON;
-    try {
-      contenuJSON = JSON.parse(data);
-    } catch (error) {
-      logger.error("Erreur lors du parsing JSON :", error);
-      res.json({ success: false });
-      return;
-    }
+    contenuJSON = JSON.parse(data);
 
     const indexToRemove = contenuJSON.findIndex(
       (location) => location.id === nftId
@@ -447,15 +366,17 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     contenuJSON.push(toWrite);
     const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
     await writeFileAsync(path, nouveauContenuJSON, "utf8");
-    sendTelegramMessage(`save gps ${nftId}`);
     res.json({ success: true });
+    logger.info(`get gps ${nftId}`, error);
+    sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
   } catch (error) {
-    logger.fatal(`error save ${nftId}`, error);
+    logger.fatal(`request-new-coordinates ${nftId}`, error);
     res.status(500).send("Error intern server (6).");
-    sendTelegramMessage(`error save gps ${nftId}`);
+    sendTelegramMessage({ message: `Error request-new-coordinates ${nftId}` });
   }
 });
 
+// A REVOIR DE TOUTE URGENCE
 app.post("/api/check-new-coordinates", async (req, res) => {
   try {
     const isGood = await req.body;
@@ -471,64 +392,39 @@ app.post("/api/check-new-coordinates", async (req, res) => {
 app.post("/api/reset-nft", async (req, res) => {
   const { nftId, fee } = req.body;
   try {
-    // Lire le fichier saveLocations.json
     const saveLocationsPath = pathSave;
     const rawDataSave = await readFileAsync(saveLocationsPath, "utf8");
 
     let saveLocations = JSON.parse(rawDataSave);
 
-    // Trouver l'index de l'élément avec le tokenId dans le tableau saveLocations
     const indexToRemove = saveLocations.findIndex(
       (location) => location.id === 1
     );
 
     if (indexToRemove !== -1) {
-      //const fee = contract.getFee(addressOwner, nftId);
-      // Créer un nouveau tableau avec seulement l'élément à supprimer
       const locationToRemove = saveLocations[indexToRemove];
 
       locationToRemove.tax = Number(fee.toString());
 
-      // Enregistrer l'élément dans le fichier validLocations.json
       const validLocationsPath = path;
       let existingValidData = [];
 
-      try {
-        // Tenter de lire le fichier
-        const rawDataValid = await readFileAsync(validLocationsPath);
+      const rawDataValid = await readFileAsync(validLocationsPath);
 
-        existingValidData = JSON.parse(rawDataValid);
-      } catch (readError) {
-        // Ignorer l'erreur si le fichier n'existe pas encore
-        logger.error("validLocations.json does not exist yet.");
-        res.json({ success: false });
-        return;
-      }
-
-      // Ajouter l'élément au tableau existingValidData
+      existingValidData = JSON.parse(rawDataValid);
       existingValidData.push(locationToRemove);
-
-      // Enregistrer le tableau mis à jour dans le fichier validLocations.json
-
       await writeFileAsync(
         validLocationsPath,
         JSON.stringify(existingValidData, null, 2),
         "utf8"
       );
-
       logger.info(`Location with tokenId ${nftId} added to validLocations.`);
-
-      // Retirer l'élément du tableau saveLocations
       saveLocations.splice(indexToRemove, 1);
-
-      // Enregistrer les modifications dans le fichier saveLocations.json
-
       await writeFileAsync(
         saveLocationsPath,
         JSON.stringify(saveLocations, null, 2),
         "utf8"
       );
-
       logger.info(`Location with tokenId ${nftId} removed from saveLocations.`);
       res.json({ success: true });
     } else {
@@ -538,6 +434,10 @@ app.post("/api/reset-nft", async (req, res) => {
       res.json({ success: false });
     }
   } catch (error) {
+    res.status(500).send("Error intern server (6).");
+
     logger.fatal("Error updating locations:", error);
   }
 });
+
+logger.info("start server");
