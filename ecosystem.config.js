@@ -7,6 +7,7 @@ module.exports = {
       exec_mode: "cluster", // Si vous souhaitez exécuter plusieurs instances en mode cluster
       instances: 2, // Nombre d'instances à exécuter
       watch: false, // Désactivez le redémarrage automatique en cas de modification des fichiers (pour la production, vous pouvez le désactiver)
+      log_file: "logs/server.log", // Chemin vers votre fichier de logs
     },
   ],
 
