@@ -291,6 +291,11 @@
                 "internalType": "bytes[]",
                 "name": "data",
                 "type": "bytes[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "feesData",
+                "type": "uint256[]"
             }
         ],
         "name": "createGpsOwner",
@@ -304,6 +309,11 @@
                 "internalType": "bytes[]",
                 "name": "data",
                 "type": "bytes[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "feesData",
+                "type": "uint256[]"
             }
         ],
         "name": "createGpsOwnerNft",
@@ -432,6 +442,25 @@
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getNFTByOwner",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint256",
                 "name": "tokenId",
                 "type": "uint256"
@@ -475,30 +504,6 @@
                 "internalType": "struct NftGuessr.NFTLocation",
                 "name": "",
                 "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
-            }
-        ],
-        "name": "getNFTsAndFeesByOwner",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
             }
         ],
         "stateMutability": "view",
@@ -784,19 +789,6 @@
         "name": "resetNFT",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "resetNFTCount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -1106,24 +1098,6 @@
             }
         ],
         "name": "transferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "transferNFT",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

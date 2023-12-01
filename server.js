@@ -2,7 +2,13 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const { Wallet, JsonRpcProvider, Contract, formatEther } = require("ethers");
+const {
+  Wallet,
+  JsonRpcProvider,
+  Contract,
+  formatEther,
+  formatUnits,
+} = require("ethers");
 const fs = require("fs");
 const port = 8000;
 const CryptoJS = require("crypto-js");
@@ -14,6 +20,7 @@ const pathSave = "./locations/saveLocations.json";
 
 const dotenv = require("dotenv");
 const log4js = require("log4js");
+//const { checkStreetViewImage } = require("./creationGps");
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -41,7 +48,8 @@ const provider = new JsonRpcProvider(process.env.PROVIDER);
 const contractAddress = process.env.CONTRACT;
 
 const contract = new Contract(contractAddress, contractInfo, provider);
-
+const signer = new Wallet(process.env.SECRET, provider);
+const contractSign = new Contract(process.env.CONTRACT, contractInfo, signer);
 /*const filter = contract.filters.GpsCheckResult();
 
 // Abonnement à l'événement en utilisant le filtre
@@ -128,35 +136,63 @@ const sendTelegramMessage = (message) => {
   bot.sendMessage(TELEGRAM_CHAT_ID, JSON.stringify(message));
 };
 
+const getObjectCreationAndFees = (array) => {
+  const nftsCreaId = array[0].map((bigNumber) => Number(bigNumber));
+  const nftsCreaFees = array[1].map((bigNumber) =>
+    Math.round(formatUnits(bigNumber, "ether"))
+  );
+  return nftsCreaId.map((id, index) => ({ id, fee: nftsCreaFees[index] }));
+};
+
 async function getAllAddressesAndTokenIds() {
   const totalSupply = await contract.totalSupply();
 
-  let addressToTokenIds = {};
+  const addressToTokenIds = {};
 
-  for (let i = 1; i <= totalSupply; i++) {
-    const currentOwner = await contract.ownerOf(i);
-    const nftsStake = await contract.getNFTsStakedByOwner(currentOwner);
+  const getAddressToTokenIds = async (owner, i) => {
+    const nftsStake = await contract.getNFTsStakedByOwner(owner);
+    const nftsResetAndFees = await contract.getResetNFTsAndFeesByOwner(owner);
+    const nftsResets = nftsResetAndFees[0].map((bigNumber) =>
+      Number(bigNumber)
+    );
+    const nftsResetFees = nftsResetAndFees[1].map((bigNumber) =>
+      Number(bigNumber)
+    );
+    const nftsResetFee = nftsResets.map((id, index) => ({
+      id,
+      fee: nftsResetFees[index],
+    }));
+
     const tokenId = i;
     const addrStake = await contract.getAddressStakeWithToken(tokenId);
     const addrReset = await contract.getAddressResetWithToken(tokenId);
 
-    if (!addressToTokenIds[currentOwner]) {
-      addressToTokenIds[currentOwner] = {
+    const nftsCreationStake = getObjectCreationAndFees(
+      await contract.getNftCreationAndFeesByUser(addrStake)
+    );
+    const nftsCreationReset = getObjectCreationAndFees(
+      await contract.getNftCreationAndFeesByUser(addrReset)
+    );
+
+    if (!addressToTokenIds[owner]) {
+      addressToTokenIds[owner] = {
         nftsId: [],
-        nftsStake,
+        nftsStake: [],
         nftsReset: [],
+        nftsCreation: [],
       };
     }
+
     if (addrStake !== "0x0000000000000000000000000000000000000000") {
       if (!addressToTokenIds[addrStake]) {
         addressToTokenIds[addrStake] = {
           nftsId: [],
           nftsStake: [],
-          nftsReset: [],
+          nftsReset: nftsResetFee,
+          nftsCreation: nftsCreationStake,
         };
-        addressToTokenIds[addrStake].nftsStake.push(tokenId);
-        isOwner = true;
       }
+      addressToTokenIds[addrStake].nftsStake.push(tokenId);
     }
 
     if (addrReset !== "0x0000000000000000000000000000000000000000") {
@@ -164,13 +200,21 @@ async function getAllAddressesAndTokenIds() {
         addressToTokenIds[addrReset] = {
           nftsId: [],
           nftsStake: [],
-          nftsReset: [],
+          nftsReset: nftsResetFee,
+          nftsCreation: nftsCreationReset,
         };
       }
-      addressToTokenIds[addrReset].nftsReset.push(tokenId);
     }
-    addressToTokenIds[currentOwner].nftsId.push(tokenId);
+    addressToTokenIds[owner].nftsId.push(tokenId);
+  };
+
+  const promises = [];
+  for (let i = 1; i <= totalSupply; i++) {
+    const currentOwner = await contract.ownerOf(i);
+    promises.push(getAddressToTokenIds(currentOwner, i));
   }
+
+  await Promise.all(promises);
 
   return addressToTokenIds;
 }
@@ -304,14 +348,15 @@ app.post("/api/remove-gps", async (req, res) => {
         JSON.stringify(existingSaveData, null, 2),
         "utf8"
       );
-      logger.info(`Location with tokenId ${nftId} saved in saveLocations.`);
       validLocations.splice(indexToRemove, 1);
+      logger.trace(`Location with tokenId ${nftId} saved in saveLocations.`);
+
       await writeFileAsync(
         validLocationsPath,
         JSON.stringify(validLocations, null, 2),
         "utf8"
       );
-      logger.info(
+      logger.trace(
         `Location with tokenId ${nftId} removed from validLocations.`
       );
       success = true;
@@ -322,16 +367,15 @@ app.post("/api/remove-gps", async (req, res) => {
     }
     res.json({ success });
   } catch (error) {
-    logger.fatal(`Error updating locations: ${nftId}`, error);
-    sendTelegramMessage({ message: `Error updating locations: ${nftId}` });
+    logger.fatal(`remove-gps: ${nftId}`, error);
+    sendTelegramMessage({ message: `error remove-gps ${nftId}` });
     res.status(500).send("Error intern server remove gps.");
   }
 });
 
 app.post("/api/request-new-coordinates", async (req, res) => {
   const { nftId, addressOwner } = req.body;
-  const signer = new Wallet(process.env.SECRET, provider);
-  const contractSign = new Contract(process.env.CONTRACT, contractInfo, signer);
+
   try {
     const data = await readFileAsync(path, "utf8");
     let contenuJSON;
@@ -359,7 +403,7 @@ app.post("/api/request-new-coordinates", async (req, res) => {
       southLat: tableauNombres[1],
       eastLon: tableauNombres[2],
       westLon: tableauNombres[3],
-      tax: Number(fee.toString()),
+      tax: Math.round(formatUnits(fee, "ether")),
       id: nftId,
       lat: tableauNombres[4],
       lng: tableauNombres[5],
@@ -368,7 +412,7 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
     await writeFileAsync(path, nouveauContenuJSON, "utf8");
     res.json({ success: true });
-    logger.info(`get gps ${nftId}`);
+    logger.info(`request-new-coordinates ${nftId}`);
     sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
   } catch (error) {
     logger.fatal(`request-new-coordinates ${nftId}`, error);
@@ -379,13 +423,19 @@ app.post("/api/request-new-coordinates", async (req, res) => {
 
 // A REVOIR DE TOUTE URGENCE
 app.post("/api/check-new-coordinates", async (req, res) => {
+  const { latitude, longitude } = req.body;
+
   try {
-    const isGood = await req.body;
-    let success = false;
-    if (isGood) success = true;
+    logger.info(`latitude: ${latitude} / longitude: ${longitude}`);
+    const success = await checkStreetViewImage({
+      lat: latitude,
+      lng: longitude,
+    });
+    logger.info(`is success: ${success}`);
     res.json({ success });
   } catch (error) {
-    logger.error("error interne server (7)", error);
+    logger.error(`error check-new-coordinates ${latitude} ${longitude}`, error);
+    sendTelegramMessage({ message: "error check-new-coordinates" });
     res.status(500).send("Error intern server (7).");
   }
 });
@@ -436,8 +486,8 @@ app.post("/api/reset-nft", async (req, res) => {
     }
   } catch (error) {
     res.status(500).send("Error intern server (6).");
-
-    logger.fatal("Error updating locations:", error);
+    sendTelegramMessage({ message: `error reset-nft ${nftId}` });
+    logger.fatal(`reset-nft ${nftId}`, error);
   }
 });
 

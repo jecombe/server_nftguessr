@@ -51,6 +51,8 @@ const createNft = async () => {
   const instance = await getInstance();
 
   const obj = [];
+
+  const objFees = [];
   jsonData.forEach((location) => {
     obj.push(
       instance.encrypt32(location.northLat),
@@ -58,12 +60,13 @@ const createNft = async () => {
       instance.encrypt32(location.eastLon),
       instance.encrypt32(location.westLon),
       instance.encrypt32(location.lat),
-      instance.encrypt32(location.lng),
-      instance.encrypt32(0)
+      instance.encrypt32(location.lng)
     );
+    objFees.push(0);
   });
-  console.log(obj);
-  const tx = await contract.createGpsOwner(obj, { gasLimit: 10000000 });
+  const tx = await contract.createGpsOwner(obj, objFees, {
+    gasLimit: 10000000,
+  });
 
   await tx.wait();
   return tx;

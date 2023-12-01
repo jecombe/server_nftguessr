@@ -38,11 +38,11 @@ async function findNearestRoad(location) {
       return null;
     }
   } catch (error) {
-    console.log(error, "oooooooooooooooooooooooooooooo");
+    console.log(error);
     return null;
   }
 }
-async function checkStreetViewImage(location) {
+const checkStreetViewImage = async (location) => {
   try {
     const { lat, lng } = location;
     const apiKey = "AIzaSyD0ZKYS4E9Sl1izucojjOl3nErVLN2ixVQ"; // Remplacez par votre clé API Street View
@@ -58,24 +58,7 @@ async function checkStreetViewImage(location) {
     );
     return false;
   }
-}
-function isValidUint32Coordinates(coordinates) {
-  return (
-    coordinates &&
-    isWithinUint32Range(coordinates.lat) &&
-    isWithinUint32Range(coordinates.lng)
-  );
-}
-
-function isWithinUint32Range(value) {
-  const maxUint32 = 4294967295;
-  return (
-    Number.isInteger(value) &&
-    value >= 0 &&
-    value <= maxUint32 &&
-    value === Math.round(value)
-  );
-}
+};
 
 /*
 Pour l'Europe de l'Ouest :
@@ -120,13 +103,6 @@ const getRandomLocationInRegionRange32 = (minLat, maxLat, minLng, maxLng) => {
   // }
 };
 
-const checkNumber = (nb) => {
-  const valueStr = value.toString();
-
-  // Vérifier si la longueur de la chaîne dépasse la longueur maximale d'un uint32
-  return valueStr.length > 10;
-};
-
 const randomGeo = () => {
   const regions = [
     { minLat: 0, maxLat: 70, minLng: 0, maxLng: 30 }, // Europe de l'Ouest
@@ -148,40 +124,6 @@ const randomGeo = () => {
 
   return randomCoordinates;
 };
-
-function removeCommaFromNumber(number) {
-  if (typeof number === "number" || typeof number === "string") {
-    // Convertir le nombre en chaîne de caractères et supprimer la virgule
-    const numberString = number.toString();
-    const numberWithoutComma = numberString.replace(",", "");
-    return parseFloat(numberWithoutComma);
-  } else {
-    return null; // Gestion d'erreur si le paramètre n'est pas un nombre ou une chaîne de caractères
-  }
-}
-function removeDecimalAndCheckUint32(coordinates) {
-  const maxUint32 = 4294967295;
-
-  // Convertir les nombres en chaînes de caractères et supprimer les virgules
-  const latitudeStr = coordinates.lat.toString().replace(".", "");
-  const longitudeStr = coordinates.lng.toString().replace(".", "");
-
-  // Convertir les chaînes de caractères en nombres entiers
-  const latitude = parseInt(latitudeStr);
-  const longitude = parseInt(longitudeStr);
-
-  // Vérifier si les valeurs sont dans la plage uint32
-  if (
-    latitude >= 0 &&
-    latitude <= maxUint32 &&
-    longitude >= 0 &&
-    longitude <= maxUint32
-  ) {
-    return { lat: latitude, lng: longitude };
-  } else {
-    return null;
-  }
-}
 
 function createSquareAroundPointWithDecimals(
   latitude,
@@ -314,7 +256,7 @@ const start = async (nb) => {
   //console.log(resp);
 };
 
-start(2);
+//start(2);
 
 // main(2).catch((error) => {
 //   console.error("Une erreur s'est produite :", error);
@@ -342,3 +284,7 @@ start(2);
 // };
 
 // create();
+module.exports = {
+  checkStreetViewImage,
+  start,
+};
