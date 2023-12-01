@@ -201,12 +201,12 @@ app.get("/api/get-gps", async (req, res) => {
     const randomLocations = JSON.parse(rawData);
     const randomIndex = Math.floor(Math.random() * randomLocations.length);
     const randomCoordinates = randomLocations[randomIndex];
+    logger.info(`get-gps ${randomCoordinates.id}`);
     var ciphertext = CryptoJS.AES.encrypt(
       JSON.stringify(randomCoordinates),
       process.env.KEY
     ).toString();
     res.json(ciphertext);
-    logger.info(`get-gps ${randomCoordinates.id}`);
   } catch (error) {
     logger.error(`get-gps`, error);
     res.status(500).send("Error intern server (0).");
