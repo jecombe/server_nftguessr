@@ -12,6 +12,7 @@ log4js.configure({
     },
   },
   categories: { default: { appenders: ["server"], level: "all" } },
+  debug: true, // Activez le débogage
 });
 
 const logger = log4js.getLogger();

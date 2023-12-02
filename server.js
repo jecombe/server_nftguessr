@@ -144,79 +144,78 @@ const getObjectCreationAndFees = (array) => {
   return nftsCreaId.map((id, index) => ({ id, fee: nftsCreaFees[index] }));
 };
 
-async function getAllAddressesAndTokenIds() {
-  const totalSupply = await contract.totalSupply();
+const createOrGetOwnerObject = (addressToTokenIds, owner) => {
+  if (!addressToTokenIds[owner]) {
+    addressToTokenIds[owner] = {
+      nfts: [],
+      nftsStake: [],
+      nftsReset: [],
+      nftsCreation: [],
+    };
+  }
+  return addressToTokenIds[owner];
+};
 
-  const addressToTokenIds = {};
+const getAddressToTokenIds = async (owner, tokenId, addressToTokenIds) => {
+  const obj = createOrGetOwnerObject(addressToTokenIds, owner);
 
-  const getAddressToTokenIds = async (owner, i) => {
-    const nftsStake = await contract.getNFTsStakedByOwner(owner);
-    const nftsResetAndFees = await contract.getResetNFTsAndFeesByOwner(owner);
-    const nftsResets = nftsResetAndFees[0].map((bigNumber) =>
-      Number(bigNumber)
-    );
-    const nftsResetFees = nftsResetAndFees[1].map((bigNumber) =>
-      Number(bigNumber)
-    );
-    const nftsResetFee = nftsResets.map((id, index) => ({
-      id,
-      fee: nftsResetFees[index],
-    }));
-
-    const tokenId = i;
+  obj.nfts.push(tokenId);
+  try {
     const addrStake = await contract.getAddressStakeWithToken(tokenId);
     const addrReset = await contract.getAddressResetWithToken(tokenId);
+    const addrCreator = await contract.getAddressCreationWithToken(tokenId);
 
-    const nftsCreationStake = getObjectCreationAndFees(
-      await contract.getNftCreationAndFeesByUser(addrStake)
-    );
-    const nftsCreationReset = getObjectCreationAndFees(
-      await contract.getNftCreationAndFeesByUser(addrReset)
-    );
+    if (addrReset !== "0x0000000000000000000000000000000000000000") {
+      const obj = createOrGetOwnerObject(addressToTokenIds, addrReset);
 
-    if (!addressToTokenIds[owner]) {
-      addressToTokenIds[owner] = {
-        nftsId: [],
-        nftsStake: [],
-        nftsReset: [],
-        nftsCreation: [],
-      };
+      const nftsResetAndFees = getObjectCreationAndFees(
+        await contract.getResetNFTsAndFeesByOwner(addrReset)
+      );
+
+      obj.nftsReset = nftsResetAndFees;
     }
 
     if (addrStake !== "0x0000000000000000000000000000000000000000") {
-      if (!addressToTokenIds[addrStake]) {
-        addressToTokenIds[addrStake] = {
-          nftsId: [],
-          nftsStake: [],
-          nftsReset: nftsResetFee,
-          nftsCreation: nftsCreationStake,
-        };
-      }
-      addressToTokenIds[addrStake].nftsStake.push(tokenId);
+      const obj = createOrGetOwnerObject(addressToTokenIds, addrStake);
+      const nftsStake = await contract.getNFTsStakedByOwner(addrStake);
+      const nftsstaked = nftsStake.map((bigNumber) => Number(bigNumber));
+
+      obj.nftsStake = nftsstaked;
     }
 
-    if (addrReset !== "0x0000000000000000000000000000000000000000") {
-      if (!addressToTokenIds[addrReset]) {
-        addressToTokenIds[addrReset] = {
-          nftsId: [],
-          nftsStake: [],
-          nftsReset: nftsResetFee,
-          nftsCreation: nftsCreationReset,
-        };
-      }
-    }
-    addressToTokenIds[owner].nftsId.push(tokenId);
-  };
+    if (
+      addrCreator !== "0x0000000000000000000000000000000000000000" &&
+      addrCreator.toLowerCase() !== process.env.OWNER
+    ) {
+      const obj = createOrGetOwnerObject(addressToTokenIds, addrCreator);
 
+      const nftsCreationReset = getObjectCreationAndFees(
+        await contract.getNftCreationAndFeesByUser(addrCreator)
+      );
+      obj.nftsCreation = nftsCreationReset;
+    }
+  } catch (error) {
+    logger.error("getAddressToTokenIds", error);
+    return error;
+  }
+};
+
+async function getAllAddressesAndTokenIds() {
+  const totalSupply = await contract.totalSupply();
+  const addressToTokenIds = {};
   const promises = [];
   for (let i = 1; i <= totalSupply; i++) {
     const currentOwner = await contract.ownerOf(i);
-    promises.push(getAddressToTokenIds(currentOwner, i));
+    promises.push(getAddressToTokenIds(currentOwner, i, addressToTokenIds));
   }
+  try {
+    await Promise.all(promises);
+    return addressToTokenIds;
+  } catch (error) {
+    logger.error("getAllAddressesAndTokenIds", error);
 
-  await Promise.all(promises);
-
-  return addressToTokenIds;
+    return error;
+  }
 }
 
 const getTotalNft = async () => {
