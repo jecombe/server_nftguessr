@@ -361,7 +361,7 @@ app.post("/api/remove-gps", async (req, res) => {
       success = true;
     } else {
       logger.error(
-        `Location with tokenId ${nftId} not found in validLocations.`
+        `Location with tokenId:${nftId} / to remove: ${indexToRemove} not found in validLocations.`
       );
     }
     res.json({ success });
