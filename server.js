@@ -372,6 +372,20 @@ app.post("/api/remove-gps", async (req, res) => {
   }
 });
 
+function formaterNombre(nombre) {
+  const nombreEnChaine = nombre.toString();
+
+  if (nombreEnChaine.length === 7) {
+    // Si le nombre a 7 chiffres, placez la virgule après le deuxième chiffre
+    return nombreEnChaine.slice(0, 2) + "." + nombreEnChaine.slice(2);
+  } else if (nombreEnChaine.length === 6) {
+    // Si le nombre a 6 chiffres, placez la virgule après le premier chiffre
+    return nombreEnChaine[0] + "." + nombreEnChaine.slice(1);
+  } else {
+    // Pour d'autres longueurs, laissez la représentation du nombre inchangée
+    return nombreEnChaine;
+  }
+}
 app.post("/api/request-new-coordinates", async (req, res) => {
   const { nftId, addressOwner } = req.body;
 
@@ -393,11 +407,14 @@ app.post("/api/request-new-coordinates", async (req, res) => {
 
     const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
 
-    const latitude = tableauNombres[4] / 1e5;
-    const longitude = tableauNombres[5] / 1e5;
+    const latitude = tableauNombres[4];
+    const longitude = tableauNombres[5];
+
+    const convertLat = formaterNombre(latitude);
+    const convertLng = formaterNombre(longitude);
     const toWrite = {
-      latitude,
-      longitude,
+      latitude: convertLat,
+      longitude: convertLng,
       northLat: tableauNombres[0],
       southLat: tableauNombres[1],
       eastLon: tableauNombres[2],
@@ -491,3 +508,10 @@ app.post("/api/reset-nft", async (req, res) => {
 });
 
 logger.info("start server");
+
+// const e = async () => {
+//   const nb = await contractSign.getNFTLocation(1);
+//   console.log(nb);
+// };
+
+// e();
