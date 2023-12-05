@@ -413,8 +413,8 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     const convertLat = formaterNombre(latitude);
     const convertLng = formaterNombre(longitude);
     const toWrite = {
-      latitude: convertLat,
-      longitude: convertLng,
+      latitude: Number(convertLat),
+      longitude: Number(convertLng),
       northLat: tableauNombres[0],
       southLat: tableauNombres[1],
       eastLon: tableauNombres[2],
