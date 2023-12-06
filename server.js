@@ -41,9 +41,15 @@ log4js.configure({
 const logger = log4js.getLogger();
 dotenv.config();
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_BOT_TOKEN_BOT = process.env.TELEGRAM_BOT_LOG_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID_LOG = process.env.TELEGRAM_CHAT_ID_LOG;
+
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN_BOT, { polling: false });
+const bot_users = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
+
 const provider = new JsonRpcProvider(process.env.PROVIDER);
 const contractAddress = process.env.CONTRACT;
 
@@ -133,7 +139,11 @@ const unsubscribe = async () => {
 // });
 
 const sendTelegramMessage = (message) => {
-  bot.sendMessage(TELEGRAM_CHAT_ID, JSON.stringify(message));
+  bot.sendMessage(TELEGRAM_CHAT_ID_LOG, JSON.stringify(message));
+};
+
+const sendTelegramMessageUser = (message) => {
+  bot_users.sendMessage(TELEGRAM_CHAT_ID, JSON.stringify(message));
 };
 
 const getObjectCreationAndFees = (array) => {
@@ -325,7 +335,7 @@ app.get("/api/get-total-nft-reset", async (req, res) => {
 });
 
 app.post("/api/remove-gps", async (req, res) => {
-  const { nftId } = req.body;
+  const { nftId, isReset } = req.body;
   let success = false;
   try {
     const saveLocationsPath = pathSave;
@@ -363,6 +373,9 @@ app.post("/api/remove-gps", async (req, res) => {
       logger.error(
         `Location with tokenId:${nftId} / to remove: ${indexToRemove} not found in validLocations.`
       );
+    }
+    if (!isReset) {
+      sendTelegramMessageUser(`💰 A user win NFT GeoSpace ${nftId} 💰`);
     }
     res.json({ success });
   } catch (error) {
@@ -430,6 +443,7 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     res.json({ success: true });
     logger.info(`request-new-coordinates ${nftId}`);
     sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
+    sendTelegramMessageUser(`💎 New NFT create with id ${nftId} 💎`);
   } catch (error) {
     logger.fatal(`request-new-coordinates ${nftId}`, error);
     res.status(500).send("Error intern server (6).");
