@@ -403,6 +403,8 @@ app.post("/api/request-new-coordinates", async (req, res) => {
   const { nftId, addressOwner } = req.body;
 
   try {
+    logger.info(`request-new-coordinates start with nft id: ${nftId}`);
+
     const data = await readFileAsync(path, "utf8");
     let contenuJSON;
     contenuJSON = JSON.parse(data);
@@ -416,7 +418,10 @@ app.post("/api/request-new-coordinates", async (req, res) => {
       return;
     }
     const nb = await contractSign.getNFTLocation(nftId);
+    logger.trace(`request-new-coordinates ${nftId} get nb `);
+
     const fee = await contractSign.getFee(addressOwner, nftId);
+    logger.trace(`request-new-coordinates ${nftId} get fees`);
 
     const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
 
@@ -440,8 +445,10 @@ app.post("/api/request-new-coordinates", async (req, res) => {
     contenuJSON.push(toWrite);
     const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
     await writeFileAsync(path, nouveauContenuJSON, "utf8");
+    logger.trace(`request-new-coordinates ${nftId} write file`);
+
     res.json({ success: true });
-    logger.info(`request-new-coordinates ${nftId}`);
+    logger.info(`request-new-coordinates ${nftId} saved !`);
     sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
     sendTelegramMessageUser(`💎 New NFT create with id ${nftId} 💎`);
   } catch (error) {
@@ -473,9 +480,13 @@ app.post("/api/check-new-coordinates", async (req, res) => {
 app.post("/api/reset-nft", async (req, res) => {
   const { nftIds, fee, isReset } = req.body;
   try {
+    logger.info(`reset-nft start save and delete with nft: ${nftIds}`);
+
     const saveLocationsPath = isReset ? pathSave : path;
     const validLocationsPath = isReset ? path : pathSave;
+
     const rawDataSave = await readFileAsync(saveLocationsPath, "utf8");
+    logger.trace(`reset-nft ${nftIds} read saveLocationsPath`);
 
     let saveLocations = JSON.parse(rawDataSave);
     let locationsToAdd = []; // Tableau pour stocker les emplacements à ajouter
@@ -494,7 +505,10 @@ app.post("/api/reset-nft", async (req, res) => {
     });
 
     // Read the existing validLocations.json
+
     const rawDataValid = await readFileAsync(validLocationsPath, "utf8");
+    logger.trace(`reset-nft ${nftIds} read validLocationsPath`);
+
     let validLocations = JSON.parse(rawDataValid);
 
     // Add locations from the locationsToAdd array to validLocations if not already present
@@ -513,17 +527,19 @@ app.post("/api/reset-nft", async (req, res) => {
       validLocationsPath,
       JSON.stringify(validLocations, null, 2)
     );
+    logger.trace(`reset-nft ${nftIds} write validLocationsPath`);
 
     // Remove the added locations from saveLocations
     saveLocations = saveLocations.filter(
       (location) => !nftIds.includes(location.id)
     );
-
     // Save the updated saveLocations.json
     await writeFileAsync(
       saveLocationsPath,
       JSON.stringify(saveLocations, null, 2)
     );
+    logger.trace(`reset-nft ${nftIds} write saveLocationsPath`);
+    logger.info(`reset-nft ${nftIds} saved !`);
     sendTelegramMessage({ message: `reset-nft ${nftIds}` });
     res.json({ success: true });
   } catch (error) {
