@@ -471,53 +471,65 @@ app.post("/api/check-new-coordinates", async (req, res) => {
 });
 
 app.post("/api/reset-nft", async (req, res) => {
-  const { nftId, fee } = req.body;
+  const { nftIds, fee, isReset } = req.body;
   try {
-    const saveLocationsPath = pathSave;
+    const saveLocationsPath = isReset ? pathSave : path;
+    const validLocationsPath = isReset ? path : pathSave;
     const rawDataSave = await readFileAsync(saveLocationsPath, "utf8");
 
     let saveLocations = JSON.parse(rawDataSave);
+    let locationsToAdd = []; // Tableau pour stocker les emplacements à ajouter
 
-    const indexToRemove = saveLocations.findIndex(
-      (location) => location.id === 1
+    // Iterate over the array of nftIds
+    nftIds.forEach((id) => {
+      const locationToAdd = saveLocations.find(
+        (location) => location.id === id
+      );
+
+      if (locationToAdd) {
+        locationToAdd.tax = Number(fee[id].toString());
+
+        locationsToAdd.push(locationToAdd);
+      }
+    });
+
+    // Read the existing validLocations.json
+    const rawDataValid = await readFileAsync(validLocationsPath, "utf8");
+    let validLocations = JSON.parse(rawDataValid);
+
+    // Add locations from the locationsToAdd array to validLocations if not already present
+    locationsToAdd.forEach((location) => {
+      const isLocationPresent = validLocations.some(
+        (existingLocation) => existingLocation.id === location.id
+      );
+
+      if (!isLocationPresent) {
+        validLocations.push(location);
+      }
+    });
+
+    // Save the updated validLocations.json
+    await writeFileAsync(
+      validLocationsPath,
+      JSON.stringify(validLocations, null, 2)
     );
 
-    if (indexToRemove !== -1) {
-      const locationToRemove = saveLocations[indexToRemove];
+    // Remove the added locations from saveLocations
+    saveLocations = saveLocations.filter(
+      (location) => !nftIds.includes(location.id)
+    );
 
-      locationToRemove.tax = Number(fee.toString());
-
-      const validLocationsPath = path;
-      let existingValidData = [];
-
-      const rawDataValid = await readFileAsync(validLocationsPath);
-
-      existingValidData = JSON.parse(rawDataValid);
-      existingValidData.push(locationToRemove);
-      await writeFileAsync(
-        validLocationsPath,
-        JSON.stringify(existingValidData, null, 2),
-        "utf8"
-      );
-      logger.info(`Location with tokenId ${nftId} added to validLocations.`);
-      saveLocations.splice(indexToRemove, 1);
-      await writeFileAsync(
-        saveLocationsPath,
-        JSON.stringify(saveLocations, null, 2),
-        "utf8"
-      );
-      logger.info(`Location with tokenId ${nftId} removed from saveLocations.`);
-      res.json({ success: true });
-    } else {
-      logger.error(
-        `Location with tokenId ${nftId} not found in saveLocations.`
-      );
-      res.json({ success: false });
-    }
+    // Save the updated saveLocations.json
+    await writeFileAsync(
+      saveLocationsPath,
+      JSON.stringify(saveLocations, null, 2)
+    );
+    sendTelegramMessage({ message: `reset-nft ${nftIds}` });
+    res.json({ success: true });
   } catch (error) {
     res.status(500).send("Error intern server (6).");
-    sendTelegramMessage({ message: `error reset-nft ${nftId}` });
-    logger.fatal(`reset-nft ${nftId}`, error);
+    sendTelegramMessage({ message: `error reset-nft ${nftIds}` });
+    logger.fatal(`reset-nft ${nftIds}`, error);
   }
 });
 
