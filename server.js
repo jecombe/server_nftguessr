@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const {
@@ -20,6 +21,7 @@ const pathSave = "./locations/saveLocations.json";
 
 const dotenv = require("dotenv");
 const log4js = require("log4js");
+// const { default: axios } = require("axios");
 //const { checkStreetViewImage } = require("./creationGps");
 
 const readFileAsync = promisify(fs.readFile);
@@ -138,6 +140,25 @@ const unsubscribe = async () => {
 //   console.log(userAddress, tokenId, isReset);
 // });
 
+// Middleware d'authentification
+/*function authenticateToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader)
+    return res.status(401).json({ message: "Accès non autorisé" });
+
+  // Séparez le token de l'en-tête
+  const token = authHeader.split(" ")[1];
+
+  // Vérifiez le token
+  jwt.verify(token, process.env.KEY, (err, user) => {
+    if (err) {
+      console.error("Erreur de vérification du token :", err);
+      return res.status(403).json({ message: "Token non valide" });
+    }
+    req.user = user;
+    next();
+  });
+}*/
 const sendTelegramMessage = (message) => {
   bot.sendMessage(TELEGRAM_CHAT_ID_LOG, JSON.stringify(message));
 };
@@ -313,15 +334,24 @@ app.get("/api/get-minimum-nft-stake", async (req, res) => {
 
 app.get("/api/get-fees", async (req, res) => {
   try {
-    const nftsStake = await contract.fees();
-    const rep = Math.round(formatEther(nftsStake));
-    res.json(rep.toString());
+    const rep = await getFees();
+    res.json(rep);
     logger.info("get-fees");
   } catch (error) {
     logger.error("get-fees", error);
     res.status(500).send("Error intern server (5).");
   }
 });
+
+const getFees = async () => {
+  try {
+    const nftsStake = await contract.fees();
+    const rep = Math.round(formatEther(nftsStake));
+    return rep.toString();
+  } catch (error) {
+    return error;
+  }
+};
 
 app.get("/api/get-total-nft-reset", async (req, res) => {
   try {
@@ -399,64 +429,72 @@ function formaterNombre(nombre) {
     return nombreEnChaine;
   }
 }
-app.post("/api/request-new-coordinates", async (req, res) => {
-  const { nftId, addressOwner } = req.body;
+app.post(
+  "/api/request-new-coordinates",
 
-  try {
-    logger.info(`request-new-coordinates start with nft id: ${nftId}`);
+  async (req, res) => {
+    const { nftId, addressOwner } = req.body;
 
-    const data = await readFileAsync(path, "utf8");
-    let contenuJSON;
-    contenuJSON = JSON.parse(data);
+    try {
+      logger.info(`request-new-coordinates start with nft id: ${nftId}`);
 
-    const indexToRemove = contenuJSON.findIndex(
-      (location) => location.id === nftId
-    );
+      const data = await readFileAsync(path, "utf8");
+      let contenuJSON;
+      contenuJSON = JSON.parse(data);
 
-    if (indexToRemove !== -1) {
-      res.json({ success: false });
-      return;
+      const indexToRemove = contenuJSON.findIndex(
+        (location) => location.id === nftId
+      );
+
+      if (indexToRemove !== -1) {
+        res.json({ success: false });
+        return;
+      }
+      const nb = await contractSign.getNFTLocation(nftId);
+      logger.trace(`request-new-coordinates ${nftId} get nb `);
+
+      const fee = await contractSign.getFee(addressOwner, nftId);
+      logger.trace(`request-new-coordinates ${nftId} get fees`);
+
+      const tableauNombres = nb.map((bigNumber) =>
+        Number(bigNumber.toString())
+      );
+
+      const latitude = tableauNombres[4];
+      const longitude = tableauNombres[5];
+
+      const convertLat = formaterNombre(latitude);
+      const convertLng = formaterNombre(longitude);
+      const toWrite = {
+        latitude: Number(convertLat),
+        longitude: Number(convertLng),
+        northLat: tableauNombres[0],
+        southLat: tableauNombres[1],
+        eastLon: tableauNombres[2],
+        westLon: tableauNombres[3],
+        tax: Math.round(formatUnits(fee, "ether")),
+        id: nftId,
+        lat: tableauNombres[4],
+        lng: tableauNombres[5],
+      };
+      contenuJSON.push(toWrite);
+      const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
+      await writeFileAsync(path, nouveauContenuJSON, "utf8");
+      logger.trace(`request-new-coordinates ${nftId} write file`);
+
+      res.json({ success: true });
+      logger.info(`request-new-coordinates ${nftId} saved !`);
+      sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
+      sendTelegramMessageUser(`💎 New NFT create with id ${nftId} 💎`);
+    } catch (error) {
+      logger.fatal(`request-new-coordinates ${nftId}`, error);
+      res.status(500).send("Error intern server (6).");
+      sendTelegramMessage({
+        message: `Error request-new-coordinates ${nftId}`,
+      });
     }
-    const nb = await contractSign.getNFTLocation(nftId);
-    logger.trace(`request-new-coordinates ${nftId} get nb `);
-
-    const fee = await contractSign.getFee(addressOwner, nftId);
-    logger.trace(`request-new-coordinates ${nftId} get fees`);
-
-    const tableauNombres = nb.map((bigNumber) => Number(bigNumber.toString()));
-
-    const latitude = tableauNombres[4];
-    const longitude = tableauNombres[5];
-
-    const convertLat = formaterNombre(latitude);
-    const convertLng = formaterNombre(longitude);
-    const toWrite = {
-      latitude: Number(convertLat),
-      longitude: Number(convertLng),
-      northLat: tableauNombres[0],
-      southLat: tableauNombres[1],
-      eastLon: tableauNombres[2],
-      westLon: tableauNombres[3],
-      tax: Math.round(formatUnits(fee, "ether")),
-      id: nftId,
-      lat: tableauNombres[4],
-      lng: tableauNombres[5],
-    };
-    contenuJSON.push(toWrite);
-    const nouveauContenuJSON = JSON.stringify(contenuJSON, null, 2);
-    await writeFileAsync(path, nouveauContenuJSON, "utf8");
-    logger.trace(`request-new-coordinates ${nftId} write file`);
-
-    res.json({ success: true });
-    logger.info(`request-new-coordinates ${nftId} saved !`);
-    sendTelegramMessage({ message: `request-new-coordinates ${nftId}` });
-    sendTelegramMessageUser(`💎 New NFT create with id ${nftId} 💎`);
-  } catch (error) {
-    logger.fatal(`request-new-coordinates ${nftId}`, error);
-    res.status(500).send("Error intern server (6).");
-    sendTelegramMessage({ message: `Error request-new-coordinates ${nftId}` });
   }
-});
+);
 
 // A REVOIR DE TOUTE URGENCE
 app.post("/api/check-new-coordinates", async (req, res) => {
@@ -549,11 +587,88 @@ app.post("/api/reset-nft", async (req, res) => {
   }
 });
 
-logger.info("start server");
+app.post("/api/telegram-channel", async (req, res) => {
+  console.log(isAccess, userName);
+  res.json({ success: true });
 
-// const e = async () => {
-//   const nb = await contractSign.getNFTLocation(1);
-//   console.log(nb);
-// };
+  // if (isAccess) {
+  //   const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/addChatMember?chat_id=${process.env.TELEGRAM_CHAT_GOVERNANCE}&user_id=${userName}`;
+  //   const response = await fetch(url, { method: "POST" });
+  //   const result = await response.json();
+  //   console.log(result);
+  // }
+});
 
-// e();
+const botTe = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+  polling: true,
+});
+
+const manageInfos = async (chatId) => {
+  const fees = await getFees();
+  const minimumStake = await contract.getNbStake();
+  const totalNfts = await getTotalNft();
+
+  const message = `
+  💎 GeoSpace total:${totalNfts}\n 💸 Minimum fees to guess: ${fees} ZAMA\n🔓 Minimum GeoSpace hold to access creation: ${minimumStake}`;
+  botTe.sendMessage(chatId, message);
+};
+
+botTe.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+
+  // Créer un clavier personnalisé
+  const keyboard = {
+    resize_keyboard: true,
+    keyboard: [["get rules"], ["get stats"], ["help"]],
+    one_time_keyboard: true,
+  };
+
+  // Envoyer un message d'introduction avec le clavier personnalisé
+  const message = `🌐 **Welcome to NFTGuessr Bot!** 🌐
+  "With this, you can get rules and all informations about the game.",
+  `;
+  botTe.sendMessage(chatId, message, {
+    reply_markup: JSON.stringify(keyboard),
+  });
+});
+
+// Écouter les réponses de l'utilisateur
+botTe.on("message", (msg) => {
+  const chatId = msg.chat.id;
+
+  // Vérifier le texte du message
+  switch (msg.text) {
+    case "get rules":
+      // Gérer la commande 1
+      const message = `
+      NFTGuessr is a thrilling game inspired by GeoGuessr. The concept is simple: pinpoint the location in Google Street View. Powered by EVM on Zama, each location is tied to an NFT encrypted with Fully Homomorphic Encryption (FHE).
+      
+      🔍 **How to Play:**
+      1. Pay 1 Zama to inquire if your location guess is correct (within the 5 km² radius of the NFT location).
+      2. If correct, you win the associated NFT!
+      
+      💡 **Options for Winners:**
+      - **Option 1:** Put the NFT back into play with your tax for one round.
+      - **Option 2:** Accumulate 3 NFTs, stake them, and unlock the ability to create new NFTs with GPS coordinates, including your tax.
+      
+      🚀 **Ready to play? Dive into the NFTGuessr adventure!**
+      
+      📌 *Note: Make sure to join our Telegram group for updates and discussions! [Telegram Group Link]*
+      
+      Happy Guessing! 🌍🎮
+      `;
+      botTe.sendMessage(chatId, message);
+      break;
+    case "get stats":
+      // Gérer la commande 2
+      manageInfos(chatId);
+      break;
+    case "help":
+      const msg = `🌐 **Welcome to NFTGuessr Bot!** 🌐
+      "With this, you can get rules and all informations about the game.",
+      `;
+      botTe.sendMessage(chatId, msg);
+      break;
+    default:
+  }
+});
