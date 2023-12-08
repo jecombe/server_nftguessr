@@ -2,7 +2,8 @@ const { Client } = require("@googlemaps/google-maps-services-js");
 const fs = require("fs");
 const axios = require("axios");
 const util = require("util");
-
+const validLoc = "../../locations/validLocations.json";
+const rajoutLocations = "../../locations/rajout.json";
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
@@ -238,16 +239,10 @@ async function main(nb) {
   }
 
   // Écriture dans le fichier validLocations.json
-  await writeFile(
-    "./locations/validLocations.json",
-    JSON.stringify(validLocations, null, 2)
-  );
+  await writeFile(validLoc, JSON.stringify(validLocations, null, 2));
 
   // Ajout uniquement des nouvelles données dans le fichier rajout.json
-  await writeFile(
-    "./locations/rajout.json",
-    JSON.stringify(locationsToAdd, null, 2)
-  );
+  await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
 }
 
 const start = async (nb) => {
