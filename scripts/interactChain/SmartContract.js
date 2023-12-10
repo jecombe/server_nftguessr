@@ -1,5 +1,5 @@
 const { createInstance } = require("fhevmjs");
-const { Wallet, JsonRpcProvider, Contract } = require("ethers");
+const { Wallet, JsonRpcProvider, Contract, parseEther } = require("ethers");
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
@@ -9,7 +9,8 @@ const provider = new JsonRpcProvider(process.env.PROVIDER);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;
-const rawData = fs.readFileSync("../../locations/rajout.json");
+const signUser = process.env.USER_SECRET;
+const rawData = fs.readFileSync("./locations/rajout.json");
 const jsonData = JSON.parse(rawData);
 const getInstance = async () => {
   if (_instance) return _instance;
@@ -72,6 +73,34 @@ const createNft = async () => {
   return tx;
 };
 
+const checkGps = async () => {
+  try {
+    console.log(process.env.USER);
+    const signer = new Wallet(signUser, provider);
+
+    // Initialize contract with ethers
+    const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+
+    // Get instance to encrypt amount parameter
+    const instance = await getInstance();
+
+    const lat = 4461583;
+    const lng = 940601;
+
+    const encryptLat = instance.encrypt32(lat);
+    const encryptLng = instance.encrypt32(lng);
+    const tx = await contract.checkGps(encryptLat, encryptLng, 1, {
+      gasLimit: 10000000,
+      value: parseEther("1"), // Convertit 1 Ether en wei
+    });
+
+    await tx.wait();
+    return tx;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const start = async () => {
   const res = await createNft();
   console.log(res);
@@ -79,4 +108,4 @@ const start = async () => {
 
 start();
 
-module.exports = { createNft };
+//module.exports = { createNft };

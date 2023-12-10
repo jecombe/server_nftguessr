@@ -50,10 +50,37 @@ class Server {
       }
     });
   }
-  getTotalNftStake() {
-    app.get("/api/get-total-nft-stake", async (req, res) => {
+  getFeesCreation() {
+    app.get("/api/get-fees-creation", async (req, res) => {
       try {
-        const nftsStake = await this.nftGuessr.getTotalStakedNFTs();
+        const nftsStake = await this.nftGuessr.getFeesCreation();
+        res.json(nftsStake.toString());
+        logger.info("get-total-nft-stake.");
+      } catch (error) {
+        logger.error("get-total-nft-stake.", error);
+        res.status(500).send("Error intern server (3).");
+      }
+    });
+  }
+
+  getRewardWinner() {
+    app.get("/api/get-reward-winner", async (req, res) => {
+      try {
+        const nftsStake = await this.nftGuessr.getAmountRewardUser();
+        console.log("=========++>", nftsStake.toString());
+        res.json(nftsStake.toString());
+        logger.info("get-total-nft-stake.");
+      } catch (error) {
+        logger.error("get-total-nft-stake.", error);
+        res.status(500).send("Error intern server (3).");
+      }
+    });
+  }
+
+  getRewardStaker() {
+    app.get("/api/get-reward-staker", async (req, res) => {
+      try {
+        const nftsStake = await this.nftGuessr.getAmountRewardUsers();
         res.json(nftsStake.toString());
         logger.info("get-total-nft-stake.");
       } catch (error) {
@@ -112,7 +139,6 @@ class Server {
       const locationToAdd = saveLocations.find(
         (location) => location.id === id
       );
-
       if (locationToAdd) {
         locationToAdd.tax = Number(fees[id].toString());
         locationsToAdd.push(locationToAdd);
@@ -146,6 +172,51 @@ class Server {
       return validLocations;
     } catch (error) {
       throw `addLocation ${error}`;
+    }
+  }
+
+  async manageResetAndWin(req) {
+    const { nftIds, fee, isReset, isWinner } = req.body;
+    console.log(nftIds, fee, isReset, isWinner);
+    try {
+      logger.info(`reset-nft start save and delete with nft: ${nftIds}`);
+
+      const saveLocationsPath = isReset ? pathSave : paths;
+      const validLocationsPath = isReset ? paths : pathSave;
+
+      const rawDataSave = await this.utiles.managerFile.readFile(
+        saveLocationsPath
+      );
+      logger.trace(`reset-nft ${nftIds} read saveLocationsPath`);
+      let { locationsToAdd } = this.getLocationToAdd(rawDataSave, nftIds, fee);
+
+      // Read the existing validLocations.json
+      let validLocations = await this.addLocation(
+        nftIds,
+        validLocationsPath,
+        locationsToAdd
+      );
+
+      await this.saveDataToFile({
+        validLocations,
+        validLocationsPath,
+        saveLocationsPath,
+        nftIds,
+      });
+
+      logger.trace(`reset-nft ${nftIds} write saveLocationsPath`);
+      logger.info(`reset-nft ${nftIds} saved !`);
+      this.telegram.sendMessageLog({ message: `reset-nft ${nftIds}` });
+      if (isWinner) {
+        this.telegram.sendMessageGroup(
+          `💰 A user win NFT GeoSpace ${nftIds} 💰`
+        );
+        this.telegram.sendMessageLog({
+          message: `reset-nft winner ${nftIds}`,
+        });
+      }
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -237,56 +308,12 @@ class Server {
         } catch (error) {
           logger.fatal(`request-new-coordinates ${req.body.nftId}`, error);
           res.status(500).send("Error intern server (6).");
-          this.sendMessageLog({
+          this.telegram.sendMessageLog({
             message: `Error request-new-coordinates ${req.body.nftId}`,
           });
         }
       }
     );
-  }
-
-  async manageResetAndWin(req) {
-    const { nftIds, fee, isReset, isWinner } = req.body;
-    try {
-      logger.info(`reset-nft start save and delete with nft: ${nftIds}`);
-
-      const saveLocationsPath = isReset ? pathSave : paths;
-      const validLocationsPath = isReset ? paths : pathSave;
-
-      const rawDataSave = await this.utiles.managerFile.readFile(
-        saveLocationsPath
-      );
-      logger.trace(`reset-nft ${nftIds} read saveLocationsPath`);
-      let { locationsToAdd } = this.getLocationToAdd(rawDataSave, nftIds, fee);
-
-      // Read the existing validLocations.json
-      let validLocations = await this.addLocation(
-        nftIds,
-        validLocationsPath,
-        locationsToAdd
-      );
-
-      await this.saveDataToFile({
-        validLocations,
-        validLocationsPath,
-        saveLocationsPath,
-        nftIds,
-      });
-
-      logger.trace(`reset-nft ${nftIds} write saveLocationsPath`);
-      logger.info(`reset-nft ${nftIds} saved !`);
-      // this.telegram.sendMessageLog({ message: `reset-nft ${nftIds}` });
-      if (isWinner) {
-        this.telegram.sendMessageGroup(
-          `💰 A user win NFT GeoSpace ${nftIds} 💰`
-        );
-        this.telegram.sendMessageLog({
-          message: `reset-nft winner ${nftIds}`,
-        });
-      }
-    } catch (error) {
-      throw error;
-    }
   }
 
   getTotalResetNfts() {
@@ -305,7 +332,9 @@ class Server {
   getApi() {
     this.getFees();
     this.getMinimumStake();
-    this.getTotalNftStake();
+    this.getFeesCreation();
+    this.getRewardStaker();
+    this.getRewardWinner();
     this.getTotalNft();
     this.getHolderAndTokens();
     this.getGps();
@@ -337,11 +366,33 @@ class Server {
   //     await fetchData();
   //   }, 500000);
   // }
+  async rewardUsers() {
+    try {
+      logger.trace("start reward");
+      const rep = await this.nftGuessr.rewardUsersWithERC20();
+      await rep.wait();
+      logger.info("Reward success !");
+      this.telegram.sendMessageGroup(
+        `💵 New Reward for staker, next one in 24h 💵`
+      );
+    } catch (error) {
+      logger.fatal("rewardUsers", error);
+      this.telegram.sendMessageLog({ message: "error rewardUsers" });
+      return error;
+    }
+  }
+
+  async startIntervals() {
+    const intervalInMilliseconds = 24 * 60 * 60 * 1000; // 24 hours
+    logger.trace("Start interval reward");
+    setInterval(this.rewardUsers.bind(this), intervalInMilliseconds);
+  }
   startServer() {
     //this.startFetchStats();
     this.startApp();
     this.postApi();
     this.getApi();
+    this.startIntervals();
   }
 }
 

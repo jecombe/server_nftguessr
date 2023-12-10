@@ -60,9 +60,19 @@ class NftGuessr {
   }
 
   getNbStake() {
-    return contract.getNbStake();
+    return contract.nbNftStake();
   }
 
+  getFeesCreation() {
+    return contract.feesCreation();
+  }
+  getAmountRewardUsers() {
+    return contract.amountRewardUsers();
+  }
+
+  getAmountRewardUser() {
+    return contract.amountRewardUser();
+  }
   getObjectStatsGame() {
     return {
       nfts: [],
@@ -99,6 +109,10 @@ class NftGuessr {
   }
   async getNftCreationAndFeesByUser(address) {
     return contract.getNftCreationAndFeesByUser(address);
+  }
+
+  async rewardUsersWithERC20() {
+    return contractSign.rewardUsersWithERC20();
   }
 
   async getTotalResetNFTs() {
