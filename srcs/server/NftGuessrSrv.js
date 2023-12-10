@@ -67,7 +67,6 @@ class Server {
     app.get("/api/get-reward-winner", async (req, res) => {
       try {
         const nftsStake = await this.nftGuessr.getAmountRewardUser();
-        console.log("=========++>", nftsStake.toString());
         res.json(nftsStake.toString());
         logger.info("get-total-nft-stake.");
       } catch (error) {
@@ -177,7 +176,6 @@ class Server {
 
   async manageResetAndWin(req) {
     const { nftIds, fee, isReset, isWinner } = req.body;
-    console.log(nftIds, fee, isReset, isWinner);
     try {
       logger.info(`reset-nft start save and delete with nft: ${nftIds}`);
 

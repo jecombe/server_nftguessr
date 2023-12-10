@@ -53,7 +53,6 @@ class Telegram {
     });
   }
   async manageInfos(chatId) {
-    console.log("==========", chatId);
     try {
       const fees = await this.nftGuessr.getFees();
       const minimumStake = await this.nftGuessr.getNbStake();

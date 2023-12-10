@@ -180,6 +180,7 @@ async function main(nb) {
     }
   } catch (error) {
     console.log("File does not exist or is empty. Initializing ID to 0.");
+    return error;
   }
 
   let i = 0;
