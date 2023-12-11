@@ -65,7 +65,7 @@
     "lng": 2109815
   },
   "6": {
-    "isValid": true,
+    "isValid": false,
     "latitude": 52.5173538,
     "longitude": 13.3951083,
     "northLat": 5253981,
@@ -128,5 +128,18 @@
     "id": 10,
     "lat": 4102577,
     "lng": 2897420
+  },
+  "14": {
+    "isValid": true,
+    "latitude": 44.86864,
+    "longitude": 9.26496,
+    "northLat": 4489110,
+    "southLat": 4484618,
+    "eastLon": 928742,
+    "westLon": 924251,
+    "tax": 4,
+    "id": "14",
+    "lat": 4486864,
+    "lng": 926496
   }
 }

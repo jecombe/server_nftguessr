@@ -6,10 +6,7 @@ const { NftGuessr } = require("../game/NftGuessr");
 const { Utiles } = require("../utils/Utiles");
 const { logger } = require("../utils/logger");
 // const { Telegram } = require("../utils/Telegram");
-const path = require("path");
 const { Map } = require("../map/Map");
-
-const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
 
 const port = 8000;
 
@@ -149,19 +146,21 @@ class Server {
 
       try {
         logger.info(`latitude: ${latitude} / longitude: ${longitude}`);
-        // const success = await this.mapGoogle.checkStreetViewImage({
-        //   lat: latitude,
-        //   lng: longitude,
-        // });
-        // logger.info(`is success: ${success}`);
+        const success = await this.mapGoogle.checkStreetViewImage({
+          lat: latitude,
+          lng: longitude,
+        });
+        logger.info(`is success: ${success}`);
 
-        res.json({ success: true });
+        res.json({ success });
       } catch (error) {
         logger.error(
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        //sendTelegramMessage({ message: "error check-new-coordinates" });
+        // this.telegram.sendMessageLog({
+        //   message: "error check-new-coordinates",
+        // });
         res.status(500).send("Error intern server (7).");
       }
     });

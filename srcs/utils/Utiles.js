@@ -27,10 +27,6 @@ class ManagerFile {
     return readFileAsync(filePath, "utf8");
   }
 
-  findLocationId(locations, toFind) {
-    return locations.findIndex((location) => location.id === toFind);
-  }
-
   async addLocation(nftIds, validLocationsPath, locationsToAdd) {
     try {
       const rawDataValid = await this.readFile(validLocationsPath);
@@ -41,7 +37,7 @@ class ManagerFile {
       // Add locations from the locationsToAdd array to validLocations if not already present
       locationsToAdd.forEach((location) => {
         const isLocationPresent = validLocations.some(
-          (existingLocation) => existingLocation.id === location.id
+          (existingLocation) => existingLocation.id == location.id
         );
 
         if (!isLocationPresent) {
@@ -103,7 +99,7 @@ class ManagerFile {
 
       // Mettre à jour les données en fonction de l'événement Solidity
       if (nftsData[id]) {
-        nftsData[id].tax = feeSave; // Mettez à jour la propriété en fonction de vos besoins
+        nftsData[id].tax = Number(feeSave); // Mettez à jour la propriété en fonction de vos besoins
         nftsData[id].isValid = isReset;
         // Écrire de manière asynchrone les données mises à jour dans le fichier JSON
         await this.writeFile(pathNfts, nftsData);
@@ -165,10 +161,6 @@ class Utiles {
     );
   }
 
-  convertBigToReadable(number) {
-    return Number(number.toString());
-  }
-
   formaterNumber(nombre) {
     const nombreEnChaine = nombre.toString();
 
@@ -202,7 +194,7 @@ class Utiles {
       process.env.KEY
     ).toString();
   }
-  formatNftToJson(nb, fee, nftId, isValid) {
+  formatNftToJson(nb, tax, nftId, isValid) {
     const tableauNombres = this.convertArrayIdBigNumberToNumber(nb);
 
     const latitude = tableauNombres[4];
@@ -218,8 +210,8 @@ class Utiles {
       southLat: tableauNombres[1],
       eastLon: tableauNombres[2],
       westLon: tableauNombres[3],
-      tax: Math.round(this.convertWeiToEth(fee)),
-      id: nftId,
+      tax,
+      id: Number(nftId),
       lat: tableauNombres[4],
       lng: tableauNombres[5],
     };
