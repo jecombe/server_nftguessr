@@ -165,9 +165,7 @@ function createSquareAroundPointWithDecimals(
 
 const randomLocation = async (nb) => {
   let id = 1;
-  let validLocations = [];
   let locationsToAdd = []; // Nouveau tableau pour les données à ajouter dans rajout.json
-
   try {
     // const fileContent = await readFile(
     //   "./locations/validLocations.json",

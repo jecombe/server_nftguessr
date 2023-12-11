@@ -8,10 +8,7 @@ const path = require("path");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 
-const paths = path.resolve(__dirname, "../../locations/validLocations.json");
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
-
-const pathSave = path.resolve(__dirname, "../../locations/saveLocations.json");
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -94,37 +91,6 @@ class ManagerFile {
     return { locationsToAdd };
   }
 
-  async manageFile(req) {
-    const { nftIds, fee, isReset } = req;
-    try {
-      logger.info(`manageFile start save and delete with nft: ${nftIds}`);
-      const saveLocationsPath = isReset ? pathSave : paths;
-      const validLocationsPath = isReset ? paths : pathSave;
-
-      const rawDataSave = await this.readFile(saveLocationsPath);
-      logger.trace(`manageFile ${nftIds} read saveLocationsPath`);
-      let { locationsToAdd } = this.getLocationToAdd(rawDataSave, nftIds, fee);
-
-      // Read the existing validLocations.json
-      let validLocations = await this.addLocation(
-        nftIds,
-        validLocationsPath,
-        locationsToAdd
-      );
-
-      await this.saveDataToFile({
-        validLocations,
-        validLocationsPath,
-        saveLocationsPath,
-        nftIds,
-      });
-
-      logger.trace(`manageFile ${nftIds} write saveLocationsPath`);
-      logger.info(`manageFile ${nftIds} saved !`);
-    } catch (error) {
-      throw error;
-    }
-  }
   async manageFiles(req) {
     const { nftIds, fee, isReset } = req;
     const relacherVerrou = await mutex.acquire();
@@ -146,8 +112,7 @@ class ManagerFile {
         logger.error(`Aucun objet trouvé pour l'ID ${id}`);
       }
     } catch (error) {
-      logger.fatal("Error manageFiles: ", error);
-      return error;
+      throw `manageFiles ${error}`;
     } finally {
       logger.trace("unlock");
       relacherVerrou();
@@ -166,31 +131,21 @@ class ManagerFile {
       const toWrite = this.utiles.formatNftToJson(
         nb,
         feeReadable,
-        tokenIdReadable
+        tokenIdReadable,
+        true
       );
 
       if (!nftsData[tokenIdReadable]) {
-        // Ajouter le nouvel NFT aux données existantes
         nftsData[tokenIdReadable] = toWrite;
 
-        // Écrire de manière asynchrone les données mises à jour dans le fichier JSON
         await this.writeFile(pathNfts, nftsData);
       } else {
         throw new Error(
-          `NFT with the same ID: ${tokenIdReadable} already exists.`
+          `user ${user} NFT with the same ID: ${tokenIdReadable} already exists.`
         );
       }
-
-      // this.telegram.sendMessageLog({
-      //   message: `createNFT ${tokenIdReadable}`,
-      // });
-      // this.telegram.sendMessageGroup(`💎 New NFT create with id ${tokenIdReadable} 💎`);
     } catch (error) {
-      logger.fatal(`createNFT: `, error);
-      // this.telegram.sendMessageLog({
-      //   message: `error fatal createNFT ${tokenIdReadable}`,
-      // });
-      return error;
+      throw `createNFT: ${error}`;
     } finally {
       relacherVerrou();
     }
@@ -247,7 +202,7 @@ class Utiles {
       process.env.KEY
     ).toString();
   }
-  formatNftToJson(nb, fee, nftId) {
+  formatNftToJson(nb, fee, nftId, isValid) {
     const tableauNombres = this.convertArrayIdBigNumberToNumber(nb);
 
     const latitude = tableauNombres[4];
@@ -256,6 +211,7 @@ class Utiles {
     const convertLat = this.formaterNumber(latitude);
     const convertLng = this.formaterNumber(longitude);
     const r = {
+      isValid,
       latitude: Number(convertLat),
       longitude: Number(convertLng),
       northLat: tableauNombres[0],

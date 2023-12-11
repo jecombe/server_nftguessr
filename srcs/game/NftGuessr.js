@@ -6,7 +6,6 @@ const path = require("path");
 
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
-const paths = path.resolve(__dirname, "../../locations/validLocations.json");
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
 
 dotenv.config();
@@ -225,11 +224,8 @@ class NftGuessr {
   }
 
   startGpsCheckResultListener() {
-    // Subscribe to future events using the filter
     logger.trace("Listening for GpsCheckResult events...");
 
-    // Set an interval to periodically check for new events
-    // Retrieve changes in the filter
     contract.on("GpsCheckResult", async (user, result, tokenId) => {
       const formatTokenId = this.utiles.convertBigToReadable(tokenId);
       logger.trace(
@@ -237,37 +233,38 @@ class NftGuessr {
       );
       try {
         if (result) {
-          await this.utiles.managerFile.manageFile({
+          await this.utiles.managerFile.manageFiles({
             nftIds: [formatTokenId],
             fee: [{ [formatTokenId]: 0 }],
             isReset: false,
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
           logger.info(`GpsCheckResult: ${message}`);
-          // this.telegram.sendMessageLog({ message: `GpsCheckResult ${message}` });
-          //   this.telegram.sendMessageGroup(
-          //     `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
-          //   );
-          //   this.telegram.sendMessageLog({
-          //     message: `GpsCheckResult winner ${nftIds}`,
-          //   });
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult ${message}`,
+          });
+          this.telegram.sendMessageGroup(
+            `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
+          );
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult winner ${nftIds}`,
+          });
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
           logger.info(`GpsCheckResult: ${message}`);
-          //   this.telegram.sendMessageLog({
-          //     message: `GpsCheckResult winner ${nftIds}`,
-          //   });
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult winner ${nftIds}`,
+          });
         }
       } catch (error) {
         logger.fatal(`startGpsCheckResultListener: `, error);
-        //   this.telegram.sendMessageLog({
-        //     message: `Error GpsCheckResult ${nftIds}`,
-        //   });
+        this.telegram.sendMessageLog({
+          message: `Error GpsCheckResult ${nftIds}`,
+        });
       }
     });
   }
 
-  // Repeat the pattern for other events
   async startCreateNFTListener() {
     logger.trace("Listening for createNFT events...");
 
@@ -290,15 +287,17 @@ class NftGuessr {
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         logger.info(`createNFT: ${message}`);
 
-        // this.telegram.sendMessageLog({
-        //   message: `createNFT ${tokenIdReadable}`,
-        // });
-        // this.telegram.sendMessageGroup(`💎 New NFT create with id ${tokenIdReadable} 💎`);
+        this.telegram.sendMessageLog({
+          message: `createNFT ${tokenIdReadable}`,
+        });
+        this.telegram.sendMessageGroup(
+          `💎 New NFT create with id ${tokenIdReadable} 💎`
+        );
       } catch (error) {
         logger.fatal(`createNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal createNFT ${tokenIdReadable}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal createNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
@@ -324,9 +323,9 @@ class NftGuessr {
         );
       } catch (error) {
         logger.fatal(`ResetNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal ResetNFT ${nftId}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal ResetNFT ${nftId}`,
+        });
         return error;
       }
     });
@@ -335,7 +334,6 @@ class NftGuessr {
   startRewardWithERC20Listener() {
     logger.trace("Listening for RewardWithERC20 events...");
 
-    // logger.trace("Interval filter events for RewardWithERC20");
     contract.on("RewardWithERC20", async (user, amount) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
       logger.info(
@@ -347,7 +345,6 @@ class NftGuessr {
   startStakingListener() {
     logger.trace("Listening for StakingNFT events...");
 
-    // logger.trace("Interval filter events for RewardWithERC20");
     contract.on("StakingNFT", async (user, tokenId, timestamp, isStake) => {
       const tokenIdReadable = this.utiles.convertBigToReadable(tokenId);
 

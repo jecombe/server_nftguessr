@@ -1,6 +1,6 @@
 {
   "1": {
-    "isValid": true,
+    "isValid": false,
     "latitude": 44.6158302,
     "longitude": 9.4060185,
     "northLat": 4463828,
@@ -65,7 +65,7 @@
     "lng": 2109815
   },
   "6": {
-    "isValid": false,
+    "isValid": true,
     "latitude": 52.5173538,
     "longitude": 13.3951083,
     "northLat": 5253981,
@@ -78,7 +78,7 @@
     "lng": 1339510
   },
   "7": {
-    "isValid": false,
+    "isValid": true,
     "latitude": 52.368834,
     "longitude": 4.8892019,
     "northLat": 5239129,
@@ -128,17 +128,5 @@
     "id": 10,
     "lat": 4102577,
     "lng": 2897420
-  },
-  "15": {
-    "latitude": 52.09321,
-    "longitude": 5.11675,
-    "northLat": 5211567,
-    "southLat": 5207075,
-    "eastLon": 513920,
-    "westLon": 509429,
-    "tax": 0,
-    "id": 15,
-    "lat": 5209321,
-    "lng": 511675
   }
 }
