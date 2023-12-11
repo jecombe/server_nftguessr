@@ -7,10 +7,9 @@ const { Utiles } = require("../utils/Utiles");
 const { logger } = require("../utils/logger");
 // const { Telegram } = require("../utils/Telegram");
 const path = require("path");
+const { Map } = require("../map/Map");
 
-const paths = path.resolve(__dirname, "../../locations/validLocations.json");
-
-const pathSave = path.resolve(__dirname, "../../locations/saveLocations.json");
+const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
 
 const port = 8000;
 
@@ -18,6 +17,7 @@ class Server {
   constructor() {
     this.utiles = new Utiles();
     this.nftGuessr = new NftGuessr(this.utiles);
+    this.mapGoogle = new Map();
     // this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.saveData = {};
     this.startServer();
@@ -53,6 +53,7 @@ class Server {
     app.get("/api/get-fees-creation", async (req, res) => {
       try {
         const nftsStake = await this.nftGuessr.getFeesCreation();
+
         res.json(nftsStake.toString());
         logger.trace("get-total-nft-stake.");
       } catch (error) {
@@ -99,6 +100,7 @@ class Server {
       }
     });
   }
+
   getGps() {
     app.get("/api/get-gps", async (req, res) => {
       try {
@@ -141,6 +143,30 @@ class Server {
     });
   }
 
+  checkGpsCoordinates() {
+    app.post("/api/check-new-coordinates", async (req, res) => {
+      const { latitude, longitude } = req.body;
+
+      try {
+        logger.info(`latitude: ${latitude} / longitude: ${longitude}`);
+        // const success = await this.mapGoogle.checkStreetViewImage({
+        //   lat: latitude,
+        //   lng: longitude,
+        // });
+        // logger.info(`is success: ${success}`);
+
+        res.json({ success: true });
+      } catch (error) {
+        logger.error(
+          `error check-new-coordinates ${latitude} ${longitude}`,
+          error
+        );
+        //sendTelegramMessage({ message: "error check-new-coordinates" });
+        res.status(500).send("Error intern server (7).");
+      }
+    });
+  }
+
   getApi() {
     this.getFees();
     this.getMinimumStake();
@@ -150,6 +176,7 @@ class Server {
     this.getTotalNft();
     this.getHolderAndTokens();
     this.getGps();
+    this.checkGpsCoordinates();
   }
   startApp() {
     app.use(cors());

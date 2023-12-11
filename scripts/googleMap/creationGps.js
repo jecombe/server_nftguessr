@@ -2,8 +2,10 @@ const { Client } = require("@googlemaps/google-maps-services-js");
 const fs = require("fs");
 const axios = require("axios");
 const util = require("util");
-const validLoc = "../../locations/validLocations.json";
-const rajoutLocations = "../../locations/rajout.json";
+const path = require("path");
+const { logger } = require("../../srcs/utils/logger");
+const rajoutLocations = path.resolve(__dirname, "../../locations/rajout.json");
+
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
@@ -39,21 +41,21 @@ async function findNearestRoad(location) {
       return null;
     }
   } catch (error) {
-    console.log(error);
+    logger.log("findNearestRoad", error);
     return null;
   }
 }
 const checkStreetViewImage = async (location) => {
   try {
     const { lat, lng } = location;
-    const apiKey = "AIzaSyD0ZKYS4E9Sl1izucojjOl3nErVLN2ixVQ"; // Remplacez par votre clé API Street View
+    const apiKey = process.env.API_KEY_MAPS; // Remplacez par votre clé API Street View
     const url = `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${lat},${lng}&fov=80&heading=70&pitch=0&key=${apiKey}`;
 
     const response = await axios.get(url, { responseType: "arraybuffer" });
     if (response.data.length !== 4937) return true;
     return false;
   } catch (error) {
-    console.error(
+    logger.error(
       "Erreur lors de la vérification de l'image Street View :",
       error
     );
@@ -161,95 +163,73 @@ function createSquareAroundPointWithDecimals(
   };
 }
 
-async function main(nb) {
+const randomLocation = async (nb) => {
   let id = 1;
   let validLocations = [];
   let locationsToAdd = []; // Nouveau tableau pour les données à ajouter dans rajout.json
 
   try {
-    const fileContent = await readFile(
-      "./locations/validLocations.json",
-      "utf8"
-    );
-    const existingData = JSON.parse(fileContent);
+    // const fileContent = await readFile(
+    //   "./locations/validLocations.json",
+    //   "utf8"
+    // );
+    //const existingData = JSON.parse(fileContent);
 
-    if (existingData.length > 0) {
-      const lastLocation = existingData[existingData.length - 1];
-      id = lastLocation.id + 1;
-      validLocations = existingData;
+    // if (existingData.length > 0) {
+    //   const lastLocation = existingData[existingData.length - 1];
+    //   id = lastLocation.id + 1;
+    //   validLocations = existingData;
+    // }
+
+    let i = 0;
+    while (i < nb) {
+      const randomLocation = randomGeo();
+      const nearestRoad = await findNearestRoad(randomLocation);
+
+      if (nearestRoad) {
+        const hasStreetViewImage = await checkStreetViewImage(nearestRoad);
+
+        if (hasStreetViewImage) {
+          const square = createSquareAroundPointWithDecimals(
+            nearestRoad.lat,
+            nearestRoad.lng,
+            5
+          );
+
+          locationsToAdd.push({
+            latitude: nearestRoad.lat,
+            longitude: nearestRoad.lng,
+            northLat: square.northLat,
+            southLat: square.southLat,
+            eastLon: square.eastLon,
+            westLon: square.westLon,
+            tax: 0,
+            id: 0,
+            lat: square.lat,
+            lng: square.lng,
+          });
+
+          id++;
+          i++;
+          logger.info(
+            `Points GPS valides enregistrés : ${locationsToAdd.length}`
+          );
+        } else {
+          logger.warn("Can't find google street view in road", nearestRoad);
+        }
+      } else {
+        logger.warn("Can't find road around ", randomLocation);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Attendez 2 secondes
     }
+
+    // Ajout uniquement des nouvelles données dans le fichier rajout.json
+    await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
   } catch (error) {
-    console.log("File does not exist or is empty. Initializing ID to 0.");
+    logger.fatal("randomLocation");
     return error;
   }
-
-  let i = 0;
-  while (i < nb) {
-    const randomLocation = randomGeo();
-    const nearestRoad = await findNearestRoad(randomLocation);
-
-    if (nearestRoad) {
-      const hasStreetViewImage = await checkStreetViewImage(nearestRoad);
-
-      if (hasStreetViewImage) {
-        const square = createSquareAroundPointWithDecimals(
-          nearestRoad.lat,
-          nearestRoad.lng,
-          5
-        );
-
-        locationsToAdd.push({
-          latitude: nearestRoad.lat,
-          longitude: nearestRoad.lng,
-          northLat: square.northLat,
-          southLat: square.southLat,
-          eastLon: square.eastLon,
-          westLon: square.westLon,
-          tax: 0,
-          id,
-          lat: square.lat,
-          lng: square.lng,
-        });
-
-        validLocations.push({
-          latitude: nearestRoad.lat,
-          longitude: nearestRoad.lng,
-          northLat: square.northLat,
-          southLat: square.southLat,
-          eastLon: square.eastLon,
-          westLon: square.westLon,
-          tax: 0,
-          id,
-          lat: square.lat,
-          lng: square.lng,
-        });
-
-        id++;
-        i++;
-        console.log(
-          `Points GPS valides enregistrés : ${validLocations.length}`
-        );
-      } else {
-        console.log("Can't find google street view in road", nearestRoad);
-      }
-    } else {
-      // console.log("Can't find road around ", randomLocation);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 500)); // Attendez 2 secondes
-  }
-
-  // Écriture dans le fichier validLocations.json
-  await writeFile(validLoc, JSON.stringify(validLocations, null, 2));
-
-  // Ajout uniquement des nouvelles données dans le fichier rajout.json
-  await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
-}
-
-const start = async (nb) => {
-  await main(nb);
-  //const resp = await createNft();
-  //console.log(resp);
 };
 
 //start(2);
@@ -282,5 +262,5 @@ const start = async (nb) => {
 // create();
 module.exports = {
   checkStreetViewImage,
-  start,
+  randomLocation,
 };

@@ -4,9 +4,10 @@ const nftGuessrAbi = require("../../abi/NftGuessr.json");
 const { logger } = require("../utils/logger");
 const path = require("path");
 
+var Mutex = require("async-mutex").Mutex;
+const mutex = new Mutex();
 const paths = path.resolve(__dirname, "../../locations/validLocations.json");
-
-const pathSave = path.resolve(__dirname, "../../locations/saveLocations.json");
+const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
 
 dotenv.config();
 
@@ -28,27 +29,6 @@ class NftGuessr {
     return nftsCreaId.map((id, index) => ({ id, fee: nftsCreaFees[index] }));
   }
 
-  formatNftToJson(nb, fee, nftId) {
-    const tableauNombres = this.utiles.convertArrayIdBigNumberToNumber(nb);
-
-    const latitude = tableauNombres[4];
-    const longitude = tableauNombres[5];
-
-    const convertLat = this.utiles.formaterNumber(latitude);
-    const convertLng = this.utiles.formaterNumber(longitude);
-    return {
-      latitude: Number(convertLat),
-      longitude: Number(convertLng),
-      northLat: tableauNombres[0],
-      southLat: tableauNombres[1],
-      eastLon: tableauNombres[2],
-      westLon: tableauNombres[3],
-      tax: Math.round(this.utiles.convertWeiToEth(fee)),
-      id: nftId,
-      lat: tableauNombres[4],
-      lng: tableauNombres[5],
-    };
-  }
   async getFees() {
     return contract.fees();
   }
@@ -122,15 +102,26 @@ class NftGuessr {
   }
 
   async getRandomLocation() {
-    const rawData = await this.utiles.managerFile.readFile(
-      "./locations/validLocations.json"
-    );
+    const relacherVerrou = await mutex.acquire();
 
-    const randomLocations = JSON.parse(rawData);
-    const randomIndex = Math.floor(Math.random() * randomLocations.length);
-    return randomLocations[randomIndex];
+    try {
+      const rawData = await this.utiles.managerFile.readFile(pathNfts);
+
+      const allLocations = JSON.parse(rawData);
+      const validLocations = Object.values(allLocations).filter(
+        (location) => location.isValid
+      );
+
+      if (validLocations.length === 0) {
+        throw new Error("Aucune localisation valide n'est disponible.");
+      }
+
+      const randomIndex = Math.floor(Math.random() * validLocations.length);
+      return validLocations[randomIndex];
+    } finally {
+      relacherVerrou();
+    }
   }
-
   async manageDataReset(addressToTokenIds, addrReset) {
     try {
       const obj = this.createOrGetOwnerObject(addressToTokenIds, addrReset);
@@ -233,116 +224,6 @@ class NftGuessr {
     }
   }
 
-  getLocationToAdd(rawDataSave, nftIds, fees) {
-    let saveLocations = JSON.parse(rawDataSave);
-    let locationsToAdd = []; // Tableau pour stocker les emplacements à ajouter
-
-    // Iterate over the array of nftIds
-    nftIds.forEach((id) => {
-      const locationToAdd = saveLocations.find(
-        (location) => location.id === id
-      );
-      if (locationToAdd) {
-        locationToAdd.tax = fees[id];
-        locationsToAdd.push(locationToAdd);
-      }
-    });
-    this.saveLocations = saveLocations;
-
-    // Utilisez let ici pour déclarer saveLocations
-    return { locationsToAdd };
-  }
-
-  async addLocation(nftIds, validLocationsPath, locationsToAdd) {
-    try {
-      const rawDataValid = await this.utiles.managerFile.readFile(
-        validLocationsPath
-      );
-      logger.trace(`GpsCheckResult ${nftIds} read validLocationsPath`);
-
-      let validLocations = JSON.parse(rawDataValid);
-
-      // Add locations from the locationsToAdd array to validLocations if not already present
-      locationsToAdd.forEach((location) => {
-        const isLocationPresent = validLocations.some(
-          (existingLocation) => existingLocation.id === location.id
-        );
-
-        if (!isLocationPresent) {
-          validLocations.push(location);
-        }
-      });
-      return validLocations;
-    } catch (error) {
-      throw `addLocation ${error}`;
-    }
-  }
-
-  async saveDataToFile(params) {
-    const {
-      validLocations,
-      validLocationsPath,
-
-      saveLocationsPath,
-      nftIds,
-    } = params;
-    try {
-      // Save the updated validLocations.json
-      await this.utiles.managerFile.writeFile(
-        validLocationsPath,
-        validLocations
-      );
-      logger.trace(`GpsCheckResult ${nftIds} write validLocationsPath`);
-
-      // Remove the added locations from saveLocations
-      this.saveLocations = this.saveLocations.filter(
-        (location) => !nftIds.includes(location.id)
-      );
-      // Save the updated saveLocations.json
-      await this.utiles.managerFile.writeFile(
-        saveLocationsPath,
-        this.saveLocations
-      );
-    } catch (error) {
-      throw `saveDataToFile: ${error}`;
-    }
-  }
-
-  async manageFile(req) {
-    const { nftIds, fee, isReset } = req;
-    try {
-      logger.info(`manageFile start save and delete with nft: ${nftIds}`);
-
-      const saveLocationsPath = isReset ? pathSave : paths;
-      const validLocationsPath = isReset ? paths : pathSave;
-
-      const rawDataSave = await this.utiles.managerFile.readFile(
-        saveLocationsPath
-      );
-      logger.trace(`manageFile ${nftIds} read saveLocationsPath`);
-      let { locationsToAdd } = this.getLocationToAdd(rawDataSave, nftIds, fee);
-
-      // Read the existing validLocations.json
-      let validLocations = await this.addLocation(
-        nftIds,
-        validLocationsPath,
-        locationsToAdd
-      );
-
-      await this.saveDataToFile({
-        validLocations,
-        validLocationsPath,
-        saveLocationsPath,
-        nftIds,
-      });
-
-      logger.trace(`manageFile ${nftIds} write saveLocationsPath`);
-      logger.info(`manageFile ${nftIds} saved !`);
-    } catch (error) {
-      throw error;
-    }
-  }
-
   startGpsCheckResultListener() {
     // Subscribe to future events using the filter
     logger.trace("Listening for GpsCheckResult events...");
@@ -350,13 +231,13 @@ class NftGuessr {
     // Set an interval to periodically check for new events
     // Retrieve changes in the filter
     contract.on("GpsCheckResult", async (user, result, tokenId) => {
-      const formatTokenId = Number(tokenId.toString());
+      const formatTokenId = this.utiles.convertBigToReadable(tokenId);
       logger.trace(
         `GpsCheckResult Event - User: ${user}, Token ID: ${formatTokenId}, isWinner: ${result}`
       );
       try {
         if (result) {
-          await this.manageFile({
+          await this.utiles.managerFile.manageFile({
             nftIds: [formatTokenId],
             fee: [{ [formatTokenId]: 0 }],
             isReset: false,
@@ -391,34 +272,22 @@ class NftGuessr {
     logger.trace("Listening for createNFT events...");
 
     contract.on("createNFT", async (user, tokenId, fee) => {
-      const tokenIdReadable = Number(tokenId.toString());
-      const feeReadable = Number(fee.toString());
+      const tokenIdReadable = this.utiles.convertBigToReadable(tokenId);
+      const feeReadable = this.utiles.convertBigToReadable(fee);
+
       logger.trace(
         `createNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, Fee: ${feeReadable}`
       );
       try {
-        const data = await this.utiles.managerFile.readFile(paths);
-        let contenuJSON = JSON.parse(data);
-
-        const indexToRemove = this.utiles.findLocationId(
-          contenuJSON,
-          tokenIdReadable
+        const nb = await this.getNFTLocation(tokenIdReadable);
+        await this.utiles.managerFile.writeNewNft(
+          user,
+          tokenIdReadable,
+          feeReadable,
+          nb
         );
 
-        if (indexToRemove !== -1) {
-          throw error;
-        }
-
-        const nb = await this.getNFTLocation(tokenIdReadable);
-        logger.trace(`createNFT ${tokenIdReadable} get nb `);
-
-        logger.trace(`createNFT ${tokenIdReadable} get fees`);
-
-        const toWrite = this.formatNftToJson(nb, feeReadable, tokenIdReadable);
-
-        contenuJSON.push(toWrite);
-        await this.utiles.managerFile.writeFile(paths, contenuJSON);
-        const message = `💎 New NFT create with id ${tokenIdReadable} 💎`;
+        const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         logger.info(`createNFT: ${message}`);
 
         // this.telegram.sendMessageLog({
@@ -438,14 +307,14 @@ class NftGuessr {
   startResetNFTListener() {
     logger.trace("Listening for ResetNFT events...");
     contract.on("ResetNFT", async (user, tokenId, isReset, tax) => {
-      const tokenIdReadable = Number(tokenId.toString());
-      const taxReadable = Number(tax.toString());
+      const tokenIdReadable = this.utiles.convertBigToReadable(tokenId);
+      const taxReadable = Number(this.utiles.convertWeiToEth(tax));
 
       logger.trace(
         `ResetNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
       );
       try {
-        await this.utiles.managerFile.manageFile({
+        await this.utiles.managerFile.manageFiles({
           nftIds: [tokenIdReadable],
           fee: [{ [tokenIdReadable]: taxReadable }],
           isReset,
@@ -463,15 +332,27 @@ class NftGuessr {
     });
   }
 
-  startRewardWithERC20Listener(changes) {
+  startRewardWithERC20Listener() {
     logger.trace("Listening for RewardWithERC20 events...");
 
     // logger.trace("Interval filter events for RewardWithERC20");
     contract.on("RewardWithERC20", async (user, amount) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
       logger.info(
-        `RewardWithERC20 Event - User: ${user}, Amount: ${Number(
-          amount.toString()
-        )}`
+        `RewardWithERC20 Event - User: ${user}, Amount: ${amountReadable}`
+      );
+    });
+  }
+
+  startStakingListener() {
+    logger.trace("Listening for StakingNFT events...");
+
+    // logger.trace("Interval filter events for RewardWithERC20");
+    contract.on("StakingNFT", async (user, tokenId, timestamp, isStake) => {
+      const tokenIdReadable = this.utiles.convertBigToReadable(tokenId);
+
+      logger.info(
+        `StakingNFT Event - User: ${user},TokenId: ${tokenIdReadable} isStake: ${isStake} Timestamp: ${timestamp}`
       );
     });
   }
@@ -480,6 +361,7 @@ class NftGuessr {
     this.startCreateNFTListener();
     this.startGpsCheckResultListener();
     this.startRewardWithERC20Listener();
+    this.startStakingListener();
     this.startResetNFTListener();
   }
 }

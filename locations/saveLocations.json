@@ -1,13 +1,15 @@
 [
   {
-    "latitude": 44.6158302,
-    "longitude": 9.4060185,
-    "northLat": 4463828,
-    "southLat": 4459337,
-    "eastLon": 942847,
-    "westLon": 938356,
-    "id": 1,
-    "lat": 4461583,
-    "lng": 940601
+    "isValid": false,
+    "latitude": 41.4014565,
+    "longitude": 2.1727238,
+    "northLat": 4142391,
+    "southLat": 4137899,
+    "eastLon": 219518,
+    "westLon": 215026,
+    "tax": 0,
+    "id": 8,
+    "lat": 4140145,
+    "lng": 217272
   }
 ]

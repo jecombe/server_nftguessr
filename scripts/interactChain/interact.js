@@ -99,12 +99,9 @@ const getBalance = async () => {
   const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
 
   // Get instance to encrypt amount parameter
-  const tx = await contract.getBalanceCoinSpace(
-    "0x95977386303e586B3C9765B51c8A77b7A18efb84",
-    {
-      gasLimit: 10000000,
-    }
-  );
+  const tx = await contract.getBalanceCoinSpace(process.env.USER, {
+    gasLimit: 10000000,
+  });
   const valueInWei = formatUnits(tx, 18);
   console.log(valueInWei);
 };
