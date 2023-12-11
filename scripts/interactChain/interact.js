@@ -5,13 +5,14 @@ const {
   Contract,
   formatUnits,
   parseUnits,
+  ethers,
 } = require("ethers");
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
 
-const provider = new JsonRpcProvider(process.env.PROVIDER);
+const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;

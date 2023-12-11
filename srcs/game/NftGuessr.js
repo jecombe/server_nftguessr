@@ -1,11 +1,16 @@
-const { Contract, Wallet, JsonRpcProvider } = require("ethers");
+const { Contract, Wallet, ethers } = require("ethers");
 const dotenv = require("dotenv");
 const nftGuessrAbi = require("../../abi/NftGuessr.json");
 const { logger } = require("../utils/logger");
+const path = require("path");
+
+const paths = path.resolve(__dirname, "../../locations/validLocations.json");
+
+const pathSave = path.resolve(__dirname, "../../locations/saveLocations.json");
 
 dotenv.config();
 
-const provider = new JsonRpcProvider(process.env.PROVIDER);
+const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 const contractAddress = process.env.CONTRACT;
 
 const contract = new Contract(contractAddress, nftGuessrAbi, provider);
@@ -25,9 +30,6 @@ class NftGuessr {
 
   formatNftToJson(nb, fee, nftId) {
     const tableauNombres = this.utiles.convertArrayIdBigNumberToNumber(nb);
-    /* nb.map((bigNumber) =>
-    Number(bigNumber.toString())
-  );*/
 
     const latitude = tableauNombres[4];
     const longitude = tableauNombres[5];
@@ -229,6 +231,256 @@ class NftGuessr {
       logger.error("error getTotalNft", error);
       return error;
     }
+  }
+
+  getLocationToAdd(rawDataSave, nftIds, fees) {
+    let saveLocations = JSON.parse(rawDataSave);
+    let locationsToAdd = []; // Tableau pour stocker les emplacements à ajouter
+
+    // Iterate over the array of nftIds
+    nftIds.forEach((id) => {
+      const locationToAdd = saveLocations.find(
+        (location) => location.id === id
+      );
+      if (locationToAdd) {
+        locationToAdd.tax = fees[id];
+        locationsToAdd.push(locationToAdd);
+      }
+    });
+    this.saveLocations = saveLocations;
+
+    // Utilisez let ici pour déclarer saveLocations
+    return { locationsToAdd };
+  }
+
+  async addLocation(nftIds, validLocationsPath, locationsToAdd) {
+    try {
+      const rawDataValid = await this.utiles.managerFile.readFile(
+        validLocationsPath
+      );
+      logger.trace(`GpsCheckResult ${nftIds} read validLocationsPath`);
+
+      let validLocations = JSON.parse(rawDataValid);
+
+      // Add locations from the locationsToAdd array to validLocations if not already present
+      locationsToAdd.forEach((location) => {
+        const isLocationPresent = validLocations.some(
+          (existingLocation) => existingLocation.id === location.id
+        );
+
+        if (!isLocationPresent) {
+          validLocations.push(location);
+        }
+      });
+      return validLocations;
+    } catch (error) {
+      throw `addLocation ${error}`;
+    }
+  }
+
+  async saveDataToFile(params) {
+    const {
+      validLocations,
+      validLocationsPath,
+
+      saveLocationsPath,
+      nftIds,
+    } = params;
+    try {
+      // Save the updated validLocations.json
+      await this.utiles.managerFile.writeFile(
+        validLocationsPath,
+        validLocations
+      );
+      logger.trace(`GpsCheckResult ${nftIds} write validLocationsPath`);
+
+      // Remove the added locations from saveLocations
+      this.saveLocations = this.saveLocations.filter(
+        (location) => !nftIds.includes(location.id)
+      );
+      // Save the updated saveLocations.json
+      await this.utiles.managerFile.writeFile(
+        saveLocationsPath,
+        this.saveLocations
+      );
+    } catch (error) {
+      throw `saveDataToFile: ${error}`;
+    }
+  }
+
+  async manageFile(req) {
+    const { nftIds, fee, isReset } = req;
+    try {
+      logger.info(`manageFile start save and delete with nft: ${nftIds}`);
+
+      const saveLocationsPath = isReset ? pathSave : paths;
+      const validLocationsPath = isReset ? paths : pathSave;
+
+      const rawDataSave = await this.utiles.managerFile.readFile(
+        saveLocationsPath
+      );
+      logger.trace(`manageFile ${nftIds} read saveLocationsPath`);
+      let { locationsToAdd } = this.getLocationToAdd(rawDataSave, nftIds, fee);
+
+      // Read the existing validLocations.json
+      let validLocations = await this.addLocation(
+        nftIds,
+        validLocationsPath,
+        locationsToAdd
+      );
+
+      await this.saveDataToFile({
+        validLocations,
+        validLocationsPath,
+        saveLocationsPath,
+        nftIds,
+      });
+
+      logger.trace(`manageFile ${nftIds} write saveLocationsPath`);
+      logger.info(`manageFile ${nftIds} saved !`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  startGpsCheckResultListener() {
+    // Subscribe to future events using the filter
+    logger.trace("Listening for GpsCheckResult events...");
+
+    // Set an interval to periodically check for new events
+    // Retrieve changes in the filter
+    contract.on("GpsCheckResult", async (user, result, tokenId) => {
+      const formatTokenId = Number(tokenId.toString());
+      logger.trace(
+        `GpsCheckResult Event - User: ${user}, Token ID: ${formatTokenId}, isWinner: ${result}`
+      );
+      try {
+        if (result) {
+          await this.manageFile({
+            nftIds: [formatTokenId],
+            fee: [{ [formatTokenId]: 0 }],
+            isReset: false,
+          });
+          const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
+          logger.info(`GpsCheckResult: ${message}`);
+          // this.telegram.sendMessageLog({ message: `GpsCheckResult ${message}` });
+          //   this.telegram.sendMessageGroup(
+          //     `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
+          //   );
+          //   this.telegram.sendMessageLog({
+          //     message: `GpsCheckResult winner ${nftIds}`,
+          //   });
+        } else {
+          const message = `💰 A user lose ${formatTokenId} 💰`;
+          logger.info(`GpsCheckResult: ${message}`);
+          //   this.telegram.sendMessageLog({
+          //     message: `GpsCheckResult winner ${nftIds}`,
+          //   });
+        }
+      } catch (error) {
+        logger.fatal(`startGpsCheckResultListener: `, error);
+        //   this.telegram.sendMessageLog({
+        //     message: `Error GpsCheckResult ${nftIds}`,
+        //   });
+      }
+    });
+  }
+
+  // Repeat the pattern for other events
+  async startCreateNFTListener() {
+    logger.trace("Listening for createNFT events...");
+
+    contract.on("createNFT", async (user, tokenId, fee) => {
+      const tokenIdReadable = Number(tokenId.toString());
+      const feeReadable = Number(fee.toString());
+      logger.trace(
+        `createNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, Fee: ${feeReadable}`
+      );
+      try {
+        const data = await this.utiles.managerFile.readFile(paths);
+        let contenuJSON = JSON.parse(data);
+
+        const indexToRemove = this.utiles.findLocationId(
+          contenuJSON,
+          tokenIdReadable
+        );
+
+        if (indexToRemove !== -1) {
+          throw error;
+        }
+
+        const nb = await this.getNFTLocation(tokenIdReadable);
+        logger.trace(`createNFT ${tokenIdReadable} get nb `);
+
+        logger.trace(`createNFT ${tokenIdReadable} get fees`);
+
+        const toWrite = this.formatNftToJson(nb, feeReadable, tokenIdReadable);
+
+        contenuJSON.push(toWrite);
+        await this.utiles.managerFile.writeFile(paths, contenuJSON);
+        const message = `💎 New NFT create with id ${tokenIdReadable} 💎`;
+        logger.info(`createNFT: ${message}`);
+
+        // this.telegram.sendMessageLog({
+        //   message: `createNFT ${tokenIdReadable}`,
+        // });
+        // this.telegram.sendMessageGroup(`💎 New NFT create with id ${tokenIdReadable} 💎`);
+      } catch (error) {
+        logger.fatal(`createNFT: `, error);
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal createNFT ${tokenIdReadable}`,
+        // });
+        return error;
+      }
+    });
+  }
+
+  startResetNFTListener() {
+    logger.trace("Listening for ResetNFT events...");
+    contract.on("ResetNFT", async (user, tokenId, isReset, tax) => {
+      const tokenIdReadable = Number(tokenId.toString());
+      const taxReadable = Number(tax.toString());
+
+      logger.trace(
+        `ResetNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
+      );
+      try {
+        await this.utiles.managerFile.manageFile({
+          nftIds: [tokenIdReadable],
+          fee: [{ [tokenIdReadable]: taxReadable }],
+          isReset,
+        });
+        logger.info(
+          `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
+        );
+      } catch (error) {
+        logger.fatal(`ResetNFT: `, error);
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal ResetNFT ${nftId}`,
+        // });
+        return error;
+      }
+    });
+  }
+
+  startRewardWithERC20Listener(changes) {
+    logger.trace("Listening for RewardWithERC20 events...");
+
+    // logger.trace("Interval filter events for RewardWithERC20");
+    contract.on("RewardWithERC20", async (user, amount) => {
+      logger.info(
+        `RewardWithERC20 Event - User: ${user}, Amount: ${Number(
+          amount.toString()
+        )}`
+      );
+    });
+  }
+
+  startListeningEvents() {
+    this.startCreateNFTListener();
+    this.startGpsCheckResultListener();
+    this.startRewardWithERC20Listener();
+    this.startResetNFTListener();
   }
 }
 

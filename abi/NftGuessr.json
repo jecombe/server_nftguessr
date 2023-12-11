@@ -118,6 +118,12 @@
                 "internalType": "bool",
                 "name": "isReset",
                 "type": "bool"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "tax",
+                "type": "uint256"
             }
         ],
         "name": "ResetNFT",

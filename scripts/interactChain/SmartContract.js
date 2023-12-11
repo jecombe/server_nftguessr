@@ -1,11 +1,17 @@
 const { createInstance } = require("fhevmjs");
-const { Wallet, JsonRpcProvider, Contract, parseEther } = require("ethers");
+const {
+  Wallet,
+  JsonRpcProvider,
+  Contract,
+  parseEther,
+  ethers,
+} = require("ethers");
 const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
 
-const provider = new JsonRpcProvider(process.env.PROVIDER);
+const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;

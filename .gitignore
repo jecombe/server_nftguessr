@@ -2,6 +2,7 @@
 node_modules/
 logs/
 coverage/
+locations/
 
 # Fichiers
 server.log
