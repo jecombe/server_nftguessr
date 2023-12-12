@@ -6,16 +6,20 @@ dotenv.config();
 class Telegram {
   constructor(utiles, nftGuessr) {
     this.nftGuessr = nftGuessr;
-
-    this.bot_log = new TelegramBot(process.env.TELEGRAM_BOT_LOG_TOKEN, {
-      polling: false,
-    });
-    this.bot_user = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
-      polling: true,
-    });
+    this.isDev = process.env.IS_DEV;
+    if (!this.idDev) {
+      this.bot_log = new TelegramBot(process.env.TELEGRAM_BOT_LOG_TOKEN, {
+        polling: false,
+      });
+      this.bot_user = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+        polling: true,
+      });
+    }
     this.utiles = utiles;
-    this.startMessage();
-    this.listeningMessages();
+    if (!this.isDev) {
+      this.startMessage();
+      this.listeningMessages();
+    }
   }
 
   sendMessageLog(message) {

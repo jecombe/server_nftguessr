@@ -16,8 +16,6 @@ const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;
-const rawData = fs.readFileSync("./locations/rajout.json");
-const jsonData = JSON.parse(rawData);
 const getInstance = async () => {
   if (_instance) return _instance;
 

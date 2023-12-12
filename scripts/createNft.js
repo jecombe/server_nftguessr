@@ -9,8 +9,10 @@ const startCreationNft = async (numberNFT) => {
     // logger.trace("creation random gps point ok");
     const response = await createNft();
     logger.info("creation random gps point ok", response);
+    console.log(response);
   } catch (error) {
     logger.fatal("fatal error startCreationNft", error);
+    console.log("ERROR CREATION NFT ", error);
   }
 };
 

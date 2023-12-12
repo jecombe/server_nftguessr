@@ -10,7 +10,8 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
-const logger = require("ethereum-event-processor/logger");
+const path = require("path");
+const logger = require("../../srcs/utils/logger");
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
@@ -49,7 +50,8 @@ const getInstance = async () => {
 // };
 
 const createNft = async () => {
-  const rawData = fs.readFileSync("./locations/rajout.json");
+  const fullPath = path.resolve(__dirname, "../../locations/rajout.json");
+  const rawData = fs.readFileSync(fullPath);
   const jsonData = JSON.parse(rawData);
 
   try {
@@ -81,7 +83,7 @@ const createNft = async () => {
 
     return tx.wait();
   } catch (error) {
-    logger.fatal("createNft: ", error);
+    console.log(error);
     return error;
   }
 };
