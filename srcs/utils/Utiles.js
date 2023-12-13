@@ -3,7 +3,7 @@ const fs = require("fs");
 const dotenv = require("dotenv");
 const { promisify } = require("util");
 const CryptoJS = require("crypto-js");
-const { logger } = require("./logger");
+const { loggerServer } = require("./logger");
 const path = require("path");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
@@ -30,7 +30,7 @@ class ManagerFile {
   async addLocation(nftIds, validLocationsPath, locationsToAdd) {
     try {
       const rawDataValid = await this.readFile(validLocationsPath);
-      logger.trace(`addLocation ${nftIds} read validLocationsPath`);
+      loggerServer.trace(`addLocation ${nftIds} read validLocationsPath`);
 
       let validLocations = JSON.parse(rawDataValid);
 
@@ -55,7 +55,7 @@ class ManagerFile {
     try {
       // Save the updated validLocations.json
       await this.writeFile(validLocationsPath, validLocations);
-      logger.trace(`saveDataToFile ${nftIds} write validLocationsPath`);
+      loggerServer.trace(`saveDataToFile ${nftIds} write validLocationsPath`);
 
       // Remove the added locations from saveLocations
       this.saveLocations = this.saveLocations.filter(
@@ -103,14 +103,14 @@ class ManagerFile {
         nftsData[id].isValid = isReset;
         // Écrire de manière asynchrone les données mises à jour dans le fichier JSON
         await this.writeFile(pathNfts, nftsData);
-        logger.info(`manageFiles update nft ${id} with fees: ${feeSave}`);
+        loggerServer.info(`manageFiles update nft ${id} with fees: ${feeSave}`);
       } else {
-        logger.error(`Aucun objet trouvé pour l'ID ${id}`);
+        loggerServer.error(`Aucun objet trouvé pour l'ID ${id}`);
       }
     } catch (error) {
       throw `manageFiles ${error}`;
     } finally {
-      logger.trace("unlock");
+      loggerServer.trace("unlock");
       relacherVerrou();
     }
   }
@@ -122,7 +122,7 @@ class ManagerFile {
       const data = await this.readFile(pathNfts);
       let nftsData = JSON.parse(data);
 
-      logger.trace(`createNFT ${tokenIdReadable} `);
+      loggerServer.trace(`createNFT ${tokenIdReadable} `);
 
       const toWrite = this.utiles.formatNftToJson(
         nb,

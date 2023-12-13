@@ -3,7 +3,7 @@ const fs = require("fs");
 const axios = require("axios");
 const util = require("util");
 const path = require("path");
-const { logger } = require("../../srcs/utils/logger");
+const { loggerScript } = require("../../srcs/utils/logger");
 const rajoutLocations = path.resolve(__dirname, "../../locations/rajout.json");
 
 const writeFile = util.promisify(fs.writeFile);
@@ -41,7 +41,7 @@ async function findNearestRoad(location) {
       return null;
     }
   } catch (error) {
-    logger.log("findNearestRoad", error);
+    loggerScript.log("findNearestRoad", error);
     return null;
   }
 }
@@ -55,7 +55,7 @@ const checkStreetViewImage = async (location) => {
     if (response.data.length !== 4937) return true;
     return false;
   } catch (error) {
-    logger.error(
+    loggerScript.error(
       "Erreur lors de la vérification de l'image Street View :",
       error
     );
@@ -213,14 +213,17 @@ const randomLocation = async (nb) => {
 
           id++;
           i++;
-          logger.info(
+          loggerScript.info(
             `Points GPS valides enregistrés : ${locationsToAdd.length}`
           );
         } else {
-          logger.warn("Can't find google street view in road", nearestRoad);
+          loggerScript.warn(
+            "Can't find google street view in road",
+            nearestRoad
+          );
         }
       } else {
-        logger.warn("Can't find road around ", randomLocation);
+        loggerScript.warn("Can't find road around ", randomLocation);
       }
 
       await new Promise((resolve) => setTimeout(resolve, 500)); // Attendez 2 secondes
@@ -229,7 +232,7 @@ const randomLocation = async (nb) => {
     // Ajout uniquement des nouvelles données dans le fichier rajout.json
     await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
   } catch (error) {
-    logger.fatal("randomLocation");
+    loggerScript.fatal("randomLocation");
     return error;
   }
 };

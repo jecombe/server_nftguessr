@@ -3,7 +3,7 @@ const app = express();
 const cors = require("cors");
 const { NftGuessr } = require("../game/NftGuessr");
 const { Utiles } = require("../utils/Utiles");
-const { logger } = require("../utils/logger");
+const { loggerServer } = require("../utils/logger");
 const { Telegram } = require("../utils/Telegram");
 const { Map } = require("../map/Map");
 
@@ -26,9 +26,9 @@ class Server {
 
         const rep = Math.round(this.utiles.convertEthToWei(fees));
         res.json(rep.toString());
-        logger.trace("get-fees");
+        loggerServer.trace("get-fees");
       } catch (error) {
-        logger.error("get-fees", error);
+        loggerServer.error("get-fees", error);
         res.status(500).send("Error intern server (5).");
       }
     });
@@ -38,9 +38,9 @@ class Server {
       try {
         const nftsStake = await this.nftGuessr.getNbStake();
         res.json(nftsStake.toString());
-        logger.trace("get-minimum-nft-stake.");
+        loggerServer.trace("get-minimum-nft-stake.");
       } catch (error) {
-        logger.error("get-minimum-nft-stake", error);
+        loggerServer.error("get-minimum-nft-stake", error);
         res.status(500).send("Error intern server (4).");
       }
     });
@@ -51,9 +51,9 @@ class Server {
         const nftsStake = await this.nftGuessr.getFeesCreation();
 
         res.json(nftsStake.toString());
-        logger.trace("get-total-nft-stake.");
+        loggerServer.trace("get-total-nft-stake.");
       } catch (error) {
-        logger.error("get-total-nft-stake.", error);
+        loggerServer.error("get-total-nft-stake.", error);
         res.status(500).send("Error intern server (3).");
       }
     });
@@ -64,9 +64,9 @@ class Server {
       try {
         const nftsStake = await this.nftGuessr.getAmountRewardUser();
         res.json(nftsStake.toString());
-        logger.trace("get-total-nft-stake.");
+        loggerServer.trace("get-total-nft-stake.");
       } catch (error) {
-        logger.error("get-total-nft-stake.", error);
+        loggerServer.error("get-total-nft-stake.", error);
         res.status(500).send("Error intern server (3).");
       }
     });
@@ -77,9 +77,9 @@ class Server {
       try {
         const nftsStake = await this.nftGuessr.getAmountRewardUsers();
         res.json(nftsStake.toString());
-        logger.trace("get-total-nft-stake.");
+        loggerServer.trace("get-total-nft-stake.");
       } catch (error) {
-        logger.error("get-total-nft-stake.", error);
+        loggerServer.error("get-total-nft-stake.", error);
         res.status(500).send("Error intern server (3).");
       }
     });
@@ -89,9 +89,9 @@ class Server {
       try {
         const holdersAndTokenIds = await this.nftGuessr.getTotalNft();
         res.json(holdersAndTokenIds);
-        logger.trace("get-total-nft");
+        loggerServer.trace("get-total-nft");
       } catch (error) {
-        logger.error("get-total-nft.", error);
+        loggerServer.error("get-total-nft.", error);
         res.status(500).send("Error intern server (2).");
       }
     });
@@ -102,11 +102,11 @@ class Server {
       try {
         const randomCoordinates = await this.nftGuessr.getRandomLocation();
         const ciphertext = this.utiles.encryptData(randomCoordinates);
-        logger.trace(`get-gps ${randomCoordinates.id}`);
+        loggerServer.trace(`get-gps ${randomCoordinates.id}`);
 
         res.json(ciphertext);
       } catch (error) {
-        logger.error(`get-gps`, error);
+        loggerServer.error(`get-gps`, error);
         res.status(500).send("Error intern server (0).");
       }
     });
@@ -117,9 +117,9 @@ class Server {
       try {
         const result = await this.nftGuessr.getAllAddressesAndTokenIds();
         res.json(result);
-        logger.trace("get-holder-and-token");
+        loggerServer.trace("get-holder-and-token");
       } catch (error) {
-        logger.error("get-holder-and-token.", error);
+        loggerServer.error("get-holder-and-token.", error);
 
         res.status(500).send("Error intern server (1).");
       }
@@ -131,9 +131,9 @@ class Server {
       try {
         const nftsStake = await this.nftGuessr.getTotalResetNFTs();
         res.json(nftsStake.toString());
-        logger.info("get-total-nft-reset.");
+        loggerServer.info("get-total-nft-reset.");
       } catch (error) {
-        logger.error("get-total-nft-reset", error);
+        loggerServer.error("get-total-nft-reset", error);
         res.status(500).send("Error intern server (6).");
       }
     });
@@ -144,16 +144,16 @@ class Server {
       const { latitude, longitude } = req.body;
 
       try {
-        logger.info(`latitude: ${latitude} / longitude: ${longitude}`);
+        loggerServer.info(`latitude: ${latitude} / longitude: ${longitude}`);
         const success = await this.mapGoogle.checkStreetViewImage({
           lat: latitude,
           lng: longitude,
         });
-        logger.info(`is success: ${success}`);
+        loggerServer.info(`is success: ${success}`);
 
         res.json({ success });
       } catch (error) {
-        logger.error(
+        loggerServer.error(
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
@@ -181,21 +181,21 @@ class Server {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.listen(port, () => {
-      logger.info(`Server is listening on port ${port}`);
+      loggerServer.info(`Server is listening on port ${port}`);
     });
   }
 
   async rewardUsers() {
     try {
-      logger.trace("start reward");
+      loggerServer.trace("start reward");
       const rep = await this.nftGuessr.rewardUsersWithERC20();
       await rep.wait();
-      logger.info("Reward success !");
+      loggerServer.info("Reward success !");
       this.telegram.sendMessageGroup(
         `💵 New Reward for staker, next one in 24h 💵`
       );
     } catch (error) {
-      logger.fatal("rewardUsers", error);
+      loggerServer.fatal("rewardUsers", error);
       this.telegram.sendMessageLog({ message: "error rewardUsers" });
       return error;
     }
@@ -203,7 +203,7 @@ class Server {
 
   async startIntervals() {
     const intervalInMilliseconds = 24 * 60 * 60 * 1000; // 24 hours
-    logger.trace("Start interval reward");
+    loggerServer.trace("Start interval reward");
     setInterval(this.rewardUsers.bind(this), intervalInMilliseconds);
   }
   startServer() {

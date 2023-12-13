@@ -1,6 +1,6 @@
 const dotenv = require("dotenv");
 const TelegramBot = require("node-telegram-bot-api");
-const { logger } = require("./logger");
+const { loggerServer } = require("./logger");
 dotenv.config();
 
 class Telegram {
@@ -66,7 +66,7 @@ class Telegram {
       💎 GeoSpace total:${totalNfts}\n 💸 Minimum fees to guess: ${feeLisible} ZAMA\n🔓 Minimum GeoSpace hold to access creation: ${minimumStake}`;
       this.bot_user.sendMessage(chatId, message);
     } catch (error) {
-      logger.fatal("manageInfos", error);
+      loggerServer.fatal("manageInfos", error);
     }
   }
 

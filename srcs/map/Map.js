@@ -1,5 +1,5 @@
 const { default: axios } = require("axios");
-const { logger } = require("../utils/logger");
+const { loggerServer } = require("../utils/logger");
 
 class Map {
   constructor() {}
@@ -13,7 +13,7 @@ class Map {
       if (response.data.length !== 4937) return true;
       return false;
     } catch (error) {
-      logger.error(
+      loggerServer.error(
         "Erreur lors de la vérification de l'image Street View :",
         error
       );

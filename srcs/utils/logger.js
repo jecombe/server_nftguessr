@@ -6,14 +6,24 @@ log4js.configure({
       filename: "./logs/server.log",
       layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
     },
+    script: {
+      type: "file",
+      filename: "./logs/script.log",
+      layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
+    },
   },
-  categories: { default: { appenders: ["server"], level: "all" } },
+  categories: {
+    default: { appenders: ["server"], level: "all" },
+    script: { appenders: ["script"], level: "all" },
+  },
   debug: true, // Activez le débogage
   pm2: true,
 });
 
-const logger = log4js.getLogger();
+const loggerServer = log4js.getLogger("server");
+const loggerScript = log4js.getLogger("script");
 
 module.exports = {
-  logger,
+  loggerServer,
+  loggerScript,
 };

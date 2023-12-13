@@ -1,7 +1,7 @@
 const { Contract, Wallet, ethers } = require("ethers");
 const dotenv = require("dotenv");
 const nftGuessrAbi = require("../../abi/NftGuessr.json");
-const { logger } = require("../utils/logger");
+const { loggerServer } = require("../utils/logger");
 const path = require("path");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
@@ -131,7 +131,7 @@ class NftGuessr {
       );
       obj.nftsReset = nftsResetAndFees;
     } catch (error) {
-      logger.error("manageDataReset", error);
+      loggerServer.error("manageDataReset", error);
       return error;
     }
   }
@@ -144,7 +144,7 @@ class NftGuessr {
 
       obj.nftsStake = nftsstaked;
     } catch (error) {
-      logger.error("manageDataStake", error);
+      loggerServer.error("manageDataStake", error);
       return error;
     }
   }
@@ -157,7 +157,7 @@ class NftGuessr {
       );
       obj.nftsCreation = nftsCreationReset;
     } catch (error) {
-      logger.error("manageDataCreator", error);
+      loggerServer.error("manageDataCreator", error);
       return error;
     }
   }
@@ -188,7 +188,7 @@ class NftGuessr {
         await this.manageDataCreator(addressToTokenIds, addrCreator);
       }
     } catch (error) {
-      logger.error("getAddressToTokenIds", error);
+      loggerServer.error("getAddressToTokenIds", error);
       return error;
     }
   }
@@ -207,7 +207,7 @@ class NftGuessr {
       await Promise.all(promises);
       return addressToTokenIds;
     } catch (error) {
-      logger.error("getAllAddressesAndTokenIds", error);
+      loggerServer.error("getAllAddressesAndTokenIds", error);
 
       return error;
     }
@@ -218,17 +218,17 @@ class NftGuessr {
       const totalNFTs = await contract.getTotalNft();
       return totalNFTs.toString();
     } catch (error) {
-      logger.error("error getTotalNft", error);
+      loggerServer.error("error getTotalNft", error);
       return error;
     }
   }
 
   startGpsCheckResultListener() {
-    logger.trace("Listening for GpsCheckResult events...");
+    loggerServer.trace("Listening for GpsCheckResult events...");
 
     contract.on("GpsCheckResult", async (user, result, tokenId) => {
       const formatTokenId = tokenId.toString();
-      logger.trace(
+      loggerServer.trace(
         `GpsCheckResult Event - User: ${user}, Token ID: ${formatTokenId}, isWinner: ${result}`
       );
       try {
@@ -239,7 +239,7 @@ class NftGuessr {
             isReset: false,
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
-          logger.info(`GpsCheckResult: ${message}`);
+          loggerServer.info(`GpsCheckResult: ${message}`);
           this.telegram.sendMessageLog({
             message: `GpsCheckResult ${message}`,
           });
@@ -248,13 +248,13 @@ class NftGuessr {
           );
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
-          logger.info(`GpsCheckResult: ${message}`);
+          loggerServer.info(`GpsCheckResult: ${message}`);
           this.telegram.sendMessageLog({
             message: `GpsCheckResult winner ${nftIds}`,
           });
         }
       } catch (error) {
-        logger.fatal(`startGpsCheckResultListener: `, error);
+        loggerServer.fatal(`startGpsCheckResultListener: `, error);
         this.telegram.sendMessageLog({
           message: `Error GpsCheckResult ${nftIds}`,
         });
@@ -263,14 +263,14 @@ class NftGuessr {
   }
 
   async startCreateNFTListener() {
-    logger.trace("Listening for createNFT events...");
+    loggerServer.trace("Listening for createNFT events...");
 
     contract.on("createNFT", async (user, tokenId, fee) => {
       const tokenIdReadable = tokenId.toString();
       const feeReadable = Math.round(this.utiles.convertWeiToEth(fee)); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
 
       // Convertir le fee en nombre JavaScript
-      logger.trace(
+      loggerServer.trace(
         `createNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, Fee: ${feeReadable}`
       );
       try {
@@ -283,7 +283,7 @@ class NftGuessr {
         );
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
-        logger.info(`createNFT: ${message}`);
+        loggerServer.info(`createNFT: ${message}`);
         this.telegram.sendMessageLog({
           message: `createNFT ${tokenIdReadable}`,
         });
@@ -291,7 +291,7 @@ class NftGuessr {
           `💎 New NFT create with id ${tokenIdReadable} 💎`
         );
       } catch (error) {
-        logger.fatal(`createNFT: `, error);
+        loggerServer.fatal(`createNFT: `, error);
         this.telegram.sendMessageLog({
           message: `error fatal createNFT ${tokenIdReadable}`,
         });
@@ -301,12 +301,12 @@ class NftGuessr {
   }
 
   startResetNFTListener() {
-    logger.trace("Listening for ResetNFT events...");
+    loggerServer.trace("Listening for ResetNFT events...");
     contract.on("ResetNFT", async (user, tokenId, isReset, tax) => {
       const tokenIdReadable = tokenId.toString();
       const taxReadable = Number(this.utiles.convertWeiToEth(tax));
 
-      logger.trace(
+      loggerServer.trace(
         `ResetNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
       );
       try {
@@ -315,11 +315,11 @@ class NftGuessr {
           fee: [{ [tokenIdReadable]: taxReadable }],
           isReset,
         });
-        logger.info(
+        loggerServer.info(
           `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
         );
       } catch (error) {
-        logger.fatal(`ResetNFT: `, error);
+        loggerServer.fatal(`ResetNFT: `, error);
         this.telegram.sendMessageLog({
           message: `error fatal ResetNFT ${nftId}`,
         });
@@ -329,23 +329,23 @@ class NftGuessr {
   }
 
   startRewardWithERC20Listener() {
-    logger.trace("Listening for RewardWithERC20 events...");
+    loggerServer.trace("Listening for RewardWithERC20 events...");
 
     contract.on("RewardWithERC20", async (user, amount) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
-      logger.info(
+      loggerServer.info(
         `RewardWithERC20 Event - User: ${user}, Amount: ${amountReadable}`
       );
     });
   }
 
   startStakingListener() {
-    logger.trace("Listening for StakingNFT events...");
+    loggerServer.trace("Listening for StakingNFT events...");
 
     contract.on("StakingNFT", async (user, tokenId, timestamp, isStake) => {
       const tokenIdReadable = tokenId.toString();
 
-      logger.info(
+      loggerServer.info(
         `StakingNFT Event - User: ${user},TokenId: ${tokenIdReadable} isStake: ${isStake} Timestamp: ${timestamp}`
       );
     });
