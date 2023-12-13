@@ -4,16 +4,16 @@ const cors = require("cors");
 const { NftGuessr } = require("../game/NftGuessr");
 const { Utiles } = require("../utils/Utiles");
 const { loggerServer } = require("../utils/logger");
-const { Telegram } = require("../utils/Telegram");
+// const { Telegram } = require("../utils/Telegram");
 const { Map } = require("../map/Map");
 
 const port = 8000;
 
 class Server {
   constructor() {
-    this.telegram = new Telegram(this.utiles, this.nftGuessr);
+    // this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.utiles = new Utiles();
-    this.nftGuessr = new NftGuessr(this.utiles, this.telegram);
+    this.nftGuessr = new NftGuessr(this.utiles, this?.telegram);
     this.mapGoogle = new Map();
 
     this.startServer();
@@ -157,9 +157,9 @@ class Server {
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        this.telegram.sendMessageLog({
-          message: "error check-new-coordinates",
-        });
+        // this.telegram.sendMessageLog({
+        //   message: "error check-new-coordinates",
+        // });
         res.status(500).send("Error intern server (7).");
       }
     });
@@ -191,12 +191,12 @@ class Server {
       const rep = await this.nftGuessr.rewardUsersWithERC20();
       await rep.wait();
       loggerServer.info("Reward success !");
-      this.telegram.sendMessageGroup(
-        `💵 New Reward for staker, next one in 24h 💵`
-      );
+      // this.telegram.sendMessageGroup(
+      //   `💵 New Reward for staker, next one in 24h 💵`
+      // );
     } catch (error) {
       loggerServer.fatal("rewardUsers", error);
-      this.telegram.sendMessageLog({ message: "error rewardUsers" });
+      // this.telegram.sendMessageLog({ message: "error rewardUsers" });
       return error;
     }
   }
