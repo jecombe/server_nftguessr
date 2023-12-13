@@ -3,8 +3,6 @@ const dotenv = require("dotenv");
 const nftGuessrAbi = require("../../abi/NftGuessr.json");
 const { logger } = require("../utils/logger");
 const path = require("path");
-//const { Telegram } = require("../utils/Telegram");
-
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
@@ -19,12 +17,10 @@ const signer = new Wallet(process.env.SECRET, provider);
 const contractSign = new Contract(process.env.CONTRACT, nftGuessrAbi, signer);
 
 class NftGuessr {
-  constructor(utiles) {
+  constructor(utiles, telegram) {
     this.utiles = utiles;
-    if (!this.isDev) {
-      // this.telegram = new Telegram();
-    }
-    this.isDev = process.env.IS_DEV;
+
+    this.telegram = telegram;
   }
 
   getObjectCreationAndFees(array) {
@@ -244,30 +240,24 @@ class NftGuessr {
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
           logger.info(`GpsCheckResult: ${message}`);
-          if (!this.isDev) {
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult ${message}`,
-            });
-            this.telegram.sendMessageGroup(
-              `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
-            );
-          }
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult ${message}`,
+          });
+          this.telegram.sendMessageGroup(
+            `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
+          );
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
           logger.info(`GpsCheckResult: ${message}`);
-          if (!this.isDev) {
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult winner ${nftIds}`,
-            });
-          }
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult winner ${nftIds}`,
+          });
         }
       } catch (error) {
         logger.fatal(`startGpsCheckResultListener: `, error);
-        if (!this.isDev) {
-          this.telegram.sendMessageLog({
-            message: `Error GpsCheckResult ${nftIds}`,
-          });
-        }
+        this.telegram.sendMessageLog({
+          message: `Error GpsCheckResult ${nftIds}`,
+        });
       }
     });
   }
@@ -277,7 +267,7 @@ class NftGuessr {
 
     contract.on("createNFT", async (user, tokenId, fee) => {
       const tokenIdReadable = tokenId.toString();
-      const feeReadable = this.utiles.convertWeiToEth(fee); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
+      const feeReadable = Math.round(this.utiles.convertWeiToEth(fee)); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
 
       // Convertir le fee en nombre JavaScript
       logger.trace(
@@ -294,21 +284,17 @@ class NftGuessr {
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         logger.info(`createNFT: ${message}`);
-        if (!this.isDev) {
-          this.telegram.sendMessageLog({
-            message: `createNFT ${tokenIdReadable}`,
-          });
-          this.telegram.sendMessageGroup(
-            `💎 New NFT create with id ${tokenIdReadable} 💎`
-          );
-        }
+        this.telegram.sendMessageLog({
+          message: `createNFT ${tokenIdReadable}`,
+        });
+        this.telegram.sendMessageGroup(
+          `💎 New NFT create with id ${tokenIdReadable} 💎`
+        );
       } catch (error) {
         logger.fatal(`createNFT: `, error);
-        if (!this.isDev) {
-          this.telegram.sendMessageLog({
-            message: `error fatal createNFT ${tokenIdReadable}`,
-          });
-        }
+        this.telegram.sendMessageLog({
+          message: `error fatal createNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
@@ -334,11 +320,9 @@ class NftGuessr {
         );
       } catch (error) {
         logger.fatal(`ResetNFT: `, error);
-        if (!this.isDev) {
-          this.telegram.sendMessageLog({
-            message: `error fatal ResetNFT ${nftId}`,
-          });
-        }
+        this.telegram.sendMessageLog({
+          message: `error fatal ResetNFT ${nftId}`,
+        });
         return error;
       }
     });

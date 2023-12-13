@@ -63,23 +63,27 @@ const checkStreetViewImage = async (location) => {
   }
 };
 
-/*
-Pour l'Europe de l'Ouest :
+/* *******************************************************************
+For now, Zama does not handle negative integers.
+So you need to use positive latitude and longitude values.
+Here are the available data:
 
+For West EU :
 Latitude : 0 à 70 degrés (nord)
 Longitude : 0 à 30 degrés (est)
-Pour l'Europe du Nord :
 
+For Noth EU:
 Latitude : 50 à 70 degrés (nord)
 Longitude : 0 à 30 degrés (est)
-Pour l'Amérique du Nord :
 
+For North America:
 Latitude : 0 à 70 degrés (nord)
 Longitude : 70 à 170 degrés (ouest)
-Pour l'Asie de l'Est :
 
+For East Asia:
 Latitude : 0 à 50 degrés (nord)
-Longitude : 90 à 180 degrés (est)*/
+Longitude : 90 à 180 degrés (est)
+******************************************************************* */
 
 const getRandomLocationInRegionRange32 = (minLat, maxLat, minLng, maxLng) => {
   const maxUint32 = 4294967295;
