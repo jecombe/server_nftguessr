@@ -244,19 +244,19 @@ class NftGuessr {
           //   message: `GpsCheckResult ${message}`,
           // });
           // this.telegram.sendMessageGroup(
-          //   `💰 User ${user} win NFT GeoSpace ${nftIds} 💰`
+          //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
           // );
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
           // this.telegram.sendMessageLog({
-          //   message: `GpsCheckResult winner ${nftIds}`,
+          //   message: `GpsCheckResult winner ${formatTokenId}`,
           // });
         }
       } catch (error) {
         loggerServer.fatal(`startGpsCheckResultListener: `, error);
         // this.telegram.sendMessageLog({
-        //   message: `Error GpsCheckResult ${nftIds}`,
+        //   message: `Error GpsCheckResult ${formatTokenId}`,
         // });
       }
     });
@@ -321,7 +321,7 @@ class NftGuessr {
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
         // this.telegram.sendMessageLog({
-        //   message: `error fatal ResetNFT ${nftId}`,
+        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
         // });
         return error;
       }
