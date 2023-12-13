@@ -20,7 +20,7 @@ class NftGuessr {
   constructor(utiles, telegram) {
     this.utiles = utiles;
 
-    // this.telegram = telegram;
+    this.telegram = telegram;
   }
 
   getObjectCreationAndFees(array) {
@@ -240,24 +240,24 @@ class NftGuessr {
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          // this.telegram.sendMessageLog({
-          //   message: `GpsCheckResult ${message}`,
-          // });
-          // this.telegram.sendMessageGroup(
-          //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-          // );
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult ${message}`,
+          });
+          this.telegram.sendMessageGroup(
+            `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+          );
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          // this.telegram.sendMessageLog({
-          //   message: `GpsCheckResult winner ${formatTokenId}`,
-          // });
+          this.telegram.sendMessageLog({
+            message: `GpsCheckResult winner ${formatTokenId}`,
+          });
         }
       } catch (error) {
         loggerServer.fatal(`startGpsCheckResultListener: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `Error GpsCheckResult ${formatTokenId}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `Error GpsCheckResult ${formatTokenId}`,
+        });
       }
     });
   }
@@ -284,17 +284,17 @@ class NftGuessr {
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        // this.telegram.sendMessageLog({
-        //   message: `createNFT ${tokenIdReadable}`,
-        // });
-        // this.telegram.sendMessageGroup(
-        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
-        // );
+        this.telegram.sendMessageLog({
+          message: `createNFT ${tokenIdReadable}`,
+        });
+        this.telegram.sendMessageGroup(
+          `💎 New NFT create with id ${tokenIdReadable} 💎`
+        );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal createNFT ${tokenIdReadable}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal createNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
@@ -320,9 +320,9 @@ class NftGuessr {
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal ResetNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
