@@ -130,6 +130,21 @@ const approval = async () => {
   await approvalTx.wait();
 };
 
+const withdraw = async () => {
+  const signer = new Wallet(sign, provider);
+
+  const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+
+  const approvalTx = await contract.balanceOf(CONTRACT_ADDRESS);
+
+  console.log(`${approvalTx}`);
+
+  const wihtdr = await contract.withdraw();
+  await wihtdr.wait();
+  // const approvalTxx = await contract.balanceOf(CONTRACT_ADDRESS);
+  // console.log(`${approvalTxx}`);
+};
+
 const start = async () => {
   const res = await setAddressToken();
   console.log(res);

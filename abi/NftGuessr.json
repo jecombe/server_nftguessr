@@ -452,6 +452,19 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "contractOwner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "bytes[]",
@@ -1481,6 +1494,13 @@
             }
         ],
         "name": "withdrawToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdraws",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
