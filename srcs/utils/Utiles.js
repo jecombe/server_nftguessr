@@ -108,6 +108,8 @@ class ManagerFile {
         loggerServer.error(`Aucun objet trouvé pour l'ID ${id}`);
       }
     } catch (error) {
+      loggerServer.fatal("error manage file", error);
+
       throw `manageFiles ${error}`;
     } finally {
       loggerServer.trace("unlock");

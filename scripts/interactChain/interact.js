@@ -57,8 +57,7 @@ const setAddressToken = async () => {
     gasLimit: 10000000,
   });
 
-  await tx.wait();
-  return tx;
+  return tx.wait();
 };
 
 const getToken = async () => {
