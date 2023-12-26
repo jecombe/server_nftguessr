@@ -52,7 +52,24 @@ const checkStreetViewImage = async (location) => {
     const url = `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${lat},${lng}&fov=80&heading=70&pitch=0&key=${apiKey}`;
 
     const response = await axios.get(url, { responseType: "arraybuffer" });
-    if (response.data.length !== 4937) return true;
+    if (response.data.length !== 4937) {
+      const resp2 = await axios({
+        method: "get",
+        url,
+        responseType: "stream",
+      });
+      const outputStream = fs.createWriteStream("streetview_image.jpg");
+      resp2.data.pipe(outputStream);
+
+      outputStream.on("finish", () => {
+        console.log("Image téléchargée avec succès.");
+      });
+
+      outputStream.on("error", (err) => {
+        console.error("Erreur lors de l'enregistrement de l'image :", err);
+      });
+      return true;
+    }
     return false;
   } catch (error) {
     loggerScript.error(
@@ -230,7 +247,7 @@ const randomLocation = async (nb) => {
     }
 
     // Ajout uniquement des nouvelles données dans le fichier rajout.json
-    await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
+    //await writeFile(rajoutLocations, JSON.stringify(locationsToAdd, null, 2));
   } catch (error) {
     loggerScript.fatal("randomLocation");
     return error;

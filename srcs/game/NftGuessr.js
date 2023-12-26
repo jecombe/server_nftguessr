@@ -6,6 +6,11 @@ const path = require("path");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
+const pathNftsInco = path.resolve(__dirname, "../../locations/nftsInco.json");
+const pathNftsFhenix = path.resolve(
+  __dirname,
+  "../../locations/nftsFhenix.json"
+);
 
 dotenv.config();
 
@@ -16,11 +21,79 @@ const contract = new Contract(contractAddress, nftGuessrAbi, provider);
 const signer = new Wallet(process.env.SECRET, provider);
 const contractSign = new Contract(process.env.CONTRACT, nftGuessrAbi, signer);
 
-class NftGuessr {
-  constructor(utiles, telegram) {
-    this.utiles = utiles;
+const providerInco = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_INCO
+);
+const contractAddressInco = process.env.CONTRACT_INCO;
 
-    this.telegram = telegram;
+const contractInco = new Contract(
+  contractAddressInco,
+  nftGuessrAbi,
+  providerInco
+);
+const signerInco = new Wallet(process.env.SECRET, providerInco);
+const contractSignInco = new Contract(
+  process.env.CONTRACT_INCO,
+  nftGuessrAbi,
+  signerInco
+);
+
+const providerFhenix = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_FHENIX
+);
+const contractAddressFhenix = process.env.CONTRACT_FHENIX;
+
+const contractFhenix = new Contract(
+  contractAddressFhenix,
+  nftGuessrAbi,
+  providerFhenix
+);
+const signerFhenix = new Wallet(process.env.SECRET, providerFhenix);
+const contractSignFhenix = new Contract(
+  process.env.CONTRACT_FHENIX,
+  nftGuessrAbi,
+  signerFhenix
+);
+
+class NftGuessr {
+  constructor(utiles, telegram, chain) {
+    this.utiles = utiles;
+    this.chain = chain;
+    this.contract = this.getContract(chain);
+    this.contractSign = this.getContractSign(chain);
+    this.pathNfts = this.getPathNfts(chain);
+
+    // this.telegram = telegram;
+  }
+
+  getContract(chain) {
+    if (chain === "zama") {
+      return contract;
+    } else if (chain === "inco") {
+      return contractInco;
+    } else if (chain === "fhenix") {
+      return contractFhenix;
+    }
+  }
+
+  getContractSign(chain) {
+    if (chain === "zama") {
+      return contractSign;
+    } else if (chain === "inco") {
+      return contractSignInco;
+    } else if (chain === "fhenix") {
+      return contractSignFhenix;
+    }
+  }
+
+  getPathNfts(chain) {
+    if (chain === "zama") {
+      return pathNfts;
+    } else if (chain === "inco") {
+      return pathNftsInco;
+    } else if (chain === "fhenix") {
+      return pathNftsFhenix;
+    }
   }
 
   getObjectCreationAndFees(array) {
@@ -30,30 +103,30 @@ class NftGuessr {
   }
 
   async getFees() {
-    return contract.fees();
+    return this.contract.fees();
   }
 
   async getFee(address, nftId) {
-    return contractSign.getFee(address, nftId);
+    return this.contractSign.getFee(address, nftId);
   }
 
   async getTotalStakedNFTs() {
-    return contract.getTotalStakedNFTs();
+    return this.contract.getTotalStakedNFTs();
   }
 
   getNbStake() {
-    return contract.nbNftStake();
+    return this.contract.nbNftStake();
   }
 
   getFeesCreation() {
-    return contract.feesCreation();
+    return this.contract.feesCreation();
   }
   getAmountRewardUsers() {
-    return contract.amountRewardUsers();
+    return this.contract.amountRewardUsers();
   }
 
   getAmountRewardUser() {
-    return contract.amountRewardUser();
+    return this.contract.amountRewardUser();
   }
   getObjectStatsGame() {
     return {
@@ -64,7 +137,7 @@ class NftGuessr {
     };
   }
   getNFTLocation(nftId) {
-    return contractSign.getNFTLocation(nftId);
+    return this.contractSign.getNFTLocation(nftId);
   }
 
   createOrGetOwnerObject(addressToTokenIds, owner) {
@@ -75,37 +148,37 @@ class NftGuessr {
   }
 
   async getAddressStakeWithToken(tokenId) {
-    return contract.getAddressStakeWithToken(tokenId);
+    return this.contract.getAddressStakeWithToken(tokenId);
   }
   async getAddressResetWithToken(tokenId) {
-    return contract.getAddressResetWithToken(tokenId);
+    return this.contract.getAddressResetWithToken(tokenId);
   }
   async getAddressCreationWithToken(tokenId) {
-    return contract.getAddressCreationWithToken(tokenId);
+    return this.contract.getAddressCreationWithToken(tokenId);
   }
   async getResetNFTsAndFeesByOwner(address) {
-    return contract.getResetNFTsAndFeesByOwner(address);
+    return this.contract.getResetNFTsAndFeesByOwner(address);
   }
   async getNFTsStakedByOwner(address) {
-    return contract.getNFTsStakedByOwner(address);
+    return this.contract.getNFTsStakedByOwner(address);
   }
   async getNftCreationAndFeesByUser(address) {
-    return contract.getNftCreationAndFeesByUser(address);
+    return this.contract.getNftCreationAndFeesByUser(address);
   }
 
   async rewardUsersWithERC20() {
-    return contractSign.rewardUsersWithERC20();
+    return this.contractSign.rewardUsersWithERC20();
   }
 
   async getTotalResetNFTs() {
-    return contract.getTotalResetNFTs();
+    return this.contract.getTotalResetNFTs();
   }
 
   async getRandomLocation() {
     const relacherVerrou = await mutex.acquire();
 
     try {
-      const rawData = await this.utiles.managerFile.readFile(pathNfts);
+      const rawData = await this.utiles.managerFile.readFile(this.pathNfts);
 
       const allLocations = JSON.parse(rawData);
       const validLocations = Object.values(allLocations).filter(
@@ -127,7 +200,7 @@ class NftGuessr {
       const obj = this.createOrGetOwnerObject(addressToTokenIds, addrReset);
 
       const nftsResetAndFees = this.getObjectCreationAndFees(
-        await contract.getResetNFTsAndFeesByOwner(addrReset)
+        await this.contract.getResetNFTsAndFeesByOwner(addrReset)
       );
       obj.nftsReset = nftsResetAndFees;
     } catch (error) {
@@ -194,11 +267,11 @@ class NftGuessr {
   }
 
   async getAllAddressesAndTokenIds() {
-    const totalSupply = await contract.totalSupply();
+    const totalSupply = await this.contract.totalSupply();
     const addressToTokenIds = {};
     const promises = [];
     for (let i = 1; i <= totalSupply; i++) {
-      const currentOwner = await contract.ownerOf(i);
+      const currentOwner = await this.contract.ownerOf(i);
       promises.push(
         this.getAddressToTokenIds(currentOwner, i, addressToTokenIds)
       );
@@ -215,7 +288,7 @@ class NftGuessr {
 
   async getTotalNft() {
     try {
-      const totalNFTs = await contract.getTotalNft();
+      const totalNFTs = await this.contract.getTotalNft();
       return totalNFTs.toString();
     } catch (error) {
       loggerServer.error("error getTotalNft", error);
@@ -224,9 +297,9 @@ class NftGuessr {
   }
 
   startGpsCheckResultListener() {
-    loggerServer.trace("Listening for GpsCheckResult events...");
+    loggerServer.trace(`Listening ${this.chain} for GpsCheckResult events...`);
 
-    contract.on("GpsCheckResult", async (user, result, tokenId) => {
+    this.contract.on("GpsCheckResult", async (user, result, tokenId) => {
       const formatTokenId = tokenId.toString();
       loggerServer.trace(
         `GpsCheckResult Event - User: ${user}, Token ID: ${formatTokenId}, isWinner: ${result}`
@@ -237,35 +310,36 @@ class NftGuessr {
             nftIds: [formatTokenId],
             fee: [{ [formatTokenId]: 0 }],
             isReset: false,
+            chain: this.chain,
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          this.telegram.sendMessageLog({
-            message: `GpsCheckResult ${message}`,
-          });
-          this.telegram.sendMessageGroup(
-            `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-          );
+          // this.telegram.sendMessageLog({
+          //   message: `GpsCheckResult ${message}`,
+          // });
+          // this.telegram.sendMessageGroup(
+          //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+          // );
         } else {
           const message = `💰 A user lose ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          this.telegram.sendMessageLog({
-            message: `GpsCheckResult winner ${formatTokenId}`,
-          });
+          // this.telegram.sendMessageLog({
+          //   message: `GpsCheckResult winner ${formatTokenId}`,
+          // });
         }
       } catch (error) {
         loggerServer.fatal(`startGpsCheckResultListener: `, error);
-        this.telegram.sendMessageLog({
-          message: `Error GpsCheckResult ${formatTokenId}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `Error GpsCheckResult ${formatTokenId}`,
+        // });
       }
     });
   }
 
   async startCreateNFTListener() {
-    loggerServer.trace("Listening for createNFT events...");
+    loggerServer.trace(`Listening ${this.chain} for createNFT events...`);
 
-    contract.on("createNFT", async (user, tokenId, fee) => {
+    this.contract.on("createNFT", async (user, tokenId, fee) => {
       const tokenIdReadable = tokenId.toString();
       const feeReadable = Math.round(this.utiles.convertWeiToEth(fee)); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
 
@@ -279,76 +353,81 @@ class NftGuessr {
           user,
           tokenIdReadable,
           feeReadable,
-          nb
+          nb,
+          this.chain
         );
 
-        const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
+        const messag = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        this.telegram.sendMessageLog({
-          message: `createNFT ${tokenIdReadable}`,
-        });
-        this.telegram.sendMessageGroup(
-          `💎 New NFT create with id ${tokenIdReadable} 💎`
-        );
+        // this.telegram.sendMessageLog({
+        //   message: `createNFT ${tokenIdReadable}`,
+        // });
+        // this.telegram.sendMessageGroup(
+        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
+        // );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal createNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal createNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
   }
 
   startResetNFTListener() {
-    loggerServer.trace("Listening for ResetNFT events...");
-    contract.on("ResetNFT", async (user, tokenId, isReset, tax) => {
+    loggerServer.trace(`Listening ${this.chain} for ResetNFT events...`);
+    this.contract.on("ResetNFT", async (user, tokenId, isReset, tax) => {
       const tokenIdReadable = tokenId.toString();
       const taxReadable = Number(this.utiles.convertWeiToEth(tax));
 
       loggerServer.trace(
-        `ResetNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
+        `ResetNFT Event ${this.chain} - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
       );
       try {
         await this.utiles.managerFile.manageFiles({
           nftIds: [tokenIdReadable],
           fee: [{ [tokenIdReadable]: taxReadable }],
           isReset,
+          chain: this.chain,
         });
         loggerServer.info(
-          `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
+          `ResetNFT ${this.chain} : Token ID: ${tokenIdReadable}, isReset: ${isReset}`
         );
       } catch (error) {
-        loggerServer.fatal(`ResetNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal ResetNFT ${tokenIdReadable}`,
-        });
+        loggerServer.fatal(`ResetNFT ${this.chain} : `, error);
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
   }
 
   startRewardWithERC20Listener() {
-    loggerServer.trace("Listening for RewardWithERC20 events...");
+    loggerServer.trace(`Listening ${this.chain} for RewardWithERC20 events...`);
 
-    contract.on("RewardWithERC20", async (user, amount) => {
+    this.contract.on("RewardWithERC20", async (user, amount) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
       loggerServer.info(
-        `RewardWithERC20 Event - User: ${user}, Amount: ${amountReadable}`
+        `RewardWithERC20 ${this.chain} Event - User: ${user}, Amount: ${amountReadable}`
       );
     });
   }
 
   startStakingListener() {
-    loggerServer.trace("Listening for StakingNFT events...");
+    loggerServer.trace(`Listening ${this.chain} for StakingNFT events...`);
 
-    contract.on("StakingNFT", async (user, tokenId, timestamp, isStake) => {
-      const tokenIdReadable = tokenId.toString();
+    this.contract.on(
+      "StakingNFT",
+      async (user, tokenId, timestamp, isStake) => {
+        const tokenIdReadable = tokenId.toString();
 
-      loggerServer.info(
-        `StakingNFT Event - User: ${user},TokenId: ${tokenIdReadable} isStake: ${isStake} Timestamp: ${timestamp}`
-      );
-    });
+        loggerServer.info(
+          `StakingNFT ${this.chain}  Event - User: ${user},TokenId: ${tokenIdReadable} isStake: ${isStake} Timestamp: ${timestamp}`
+        );
+      }
+    );
   }
 
   startListeningEvents() {

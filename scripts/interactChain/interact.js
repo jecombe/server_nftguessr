@@ -13,6 +13,12 @@ dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
+const providerInco = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_INCO
+);
+const providerFhenix = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_FHENIX
+);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;
@@ -46,14 +52,51 @@ const changeThreshold = async () => {
   return transaction;
 };
 
-const setAddressToken = async () => {
-  const signer = new Wallet(sign, provider);
+const getDefaultProvider = (chain) => {
+  if (chain === "zama") {
+    return provider;
+  } else if (chain === "fhenix") {
+    return providerFhenix;
+  } else if (chain === "inco") {
+    return providerInco;
+  }
+  return undefined;
+};
+
+const getDefaultContract = (chain) => {
+  if (chain === "zama") {
+    return process.env.CONTRACT;
+  } else if (chain === "fhenix") {
+    return process.env.CONTRACT_FHENIX;
+  } else if (chain === "inco") {
+    return process.env.CONTRACT_INCO;
+  }
+  return undefined;
+};
+
+const getDefaultContractToken = (chain) => {
+  if (chain === "zama") {
+    return process.env.TOKEN;
+  } else if (chain === "fhenix") {
+    return process.env.TOKEN_FHENIX;
+  } else if (chain === "inco") {
+    return process.env.TOKEN_INCO;
+  }
+  return undefined;
+};
+
+const setAddressToken = async (chain) => {
+  const provid = chain === "inco" ? providerInco : provider;
+  const signer = new Wallet(sign, provid);
+  const ADDR_CONTRACT =
+    chain === "inco" ? process.env.CONTRACT_INCO : process.env.CONTRACT;
+  const TOKEN = chain === "inco" ? process.env.TOKEN_INCO : process.env.TOKEN; //getDefaultContractToken(chain);
 
   // Initialize contract with ethers
-  const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+  const contract = new Contract(ADDR_CONTRACT, contractInfo, signer);
 
   // Get instance to encrypt amount parameter
-  const tx = await contract.setAddressToken(process.env.TOKEN, {
+  const tx = await contract.setAddressToken(TOKEN, {
     gasLimit: 10000000,
   });
 
@@ -146,7 +189,7 @@ const withdraw = async () => {
 };
 
 const start = async () => {
-  const res = await setAddressToken();
+  const res = await setAddressToken("inco");
   console.log(res);
 };
 

@@ -14,24 +14,43 @@ const path = require("path");
 const logger = require("../../srcs/utils/logger");
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
+const providerInco = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_INCO
+);
+const providerFhenix = new ethers.providers.JsonRpcProvider(
+  process.env.PROVIDER_FHENIX
+);
 let _instance;
-const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;
 const signUser = process.env.USER_SECRET;
 
-const getInstance = async () => {
+async function signTypedData(typedData) {
+  const signer = new ethers.Wallet(signUser, provider); // Remplacez privateKey par la clé privée associée à l'adresse Ethereum
+
+  const signature = await signer.signMessage(typedData);
+
+  return signature;
+}
+
+const getInstance = async (provi) => {
   if (_instance) return _instance;
 
-  const network = await provider.getNetwork();
+  const network = await provi.getNetwork();
 
   const chainId = +network.chainId.toString();
 
-  const publicKey = await provider.call({
+  const publicKey = await provi.call({
     to: "0x0000000000000000000000000000000000000044",
   });
 
   _instance = createInstance({ chainId, publicKey });
   return _instance;
+};
+const getToken = async (instanceG) => {
+  return instanceG.generateToken({
+    name: "Authentication",
+    verifyingContract: process.env.CONTRACT,
+  });
 };
 
 // const changeThreshold = async () => {
@@ -49,24 +68,50 @@ const getInstance = async () => {
 //   return transaction;
 // };
 
-const createNft = async () => {
+const getDefaultProvider = (chain) => {
+  if (chain === "zama") {
+    return provider;
+  } else if (chain === "fhenix") {
+    return providerFhenix;
+  } else if (chain === "inco") {
+    return providerInco;
+  }
+  return undefined;
+};
+
+const getDefaultContract = (chain) => {
+  if (chain === "zama") {
+    return process.env.CONTRACT;
+  } else if (chain === "fhenix") {
+    return process.env.CONTRACT_FHENIX;
+  } else if (chain === "inco") {
+    return process.env.CONTRACT_INCO;
+  }
+  return undefined;
+};
+
+const createNft = async (chain) => {
   const fullPath = path.resolve(__dirname, "../../locations/rajout.json");
   const rawData = fs.readFileSync(fullPath);
   const jsonData = JSON.parse(rawData);
 
   try {
-    const signer = new Wallet(sign, provider);
+    const provid = chain === "inco" ? providerInco : provider;
+    const signer = new Wallet(sign, provid);
+    const ADDR_CONTRACT =
+      chain === "inco" ? process.env.CONTRACT_INCO : process.env.CONTRACT;
 
     // Initialize contract with ethers
-    const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+    const contract = new Contract(ADDR_CONTRACT, contractInfo, signer);
 
     // Get instance to encrypt amount parameter
-    const instance = await getInstance();
+    const instance = await getInstance(provid);
 
     const obj = [];
 
     const objFees = [];
     jsonData.forEach((location) => {
+      console.log(location);
       obj.push(
         instance.encrypt32(location.northLat),
         instance.encrypt32(location.southLat),
@@ -87,6 +132,36 @@ const createNft = async () => {
     return error;
   }
 };
+
+const getLocation = async (chain) => {
+  const provid = chain === "inco" ? providerInco : provider;
+  const signer = new Wallet(sign, provid);
+  const ADDR_CONTRACT =
+    chain === "inco" ? process.env.CONTRACT_INCO : process.env.CONTRACT;
+
+  // Initialize contract with ethers
+  const contract = new Contract(ADDR_CONTRACT, contractInfo, signer);
+
+  // Get instance to encrypt amount parameter
+  const instance = await getInstance();
+  const token = await getToken(instance);
+  console.log(instance.hasKeypair(process.env.CONTRACT)); // false
+  const params = JSON.stringify([
+    process.env.OWNER,
+    JSON.stringify(token.token),
+  ]);
+  const signature = signTypedData(params);
+  // instance.setTokenSignature(process.env.CONTRACT, signature);
+  // const tx = await contract.getNFTLocation(1, token.publicKey, {
+  //   from: process.env.OWNER,
+  // });
+
+  //console.log(tx[0]);
+  //const r = instance.decrypt(token.publicKey, tx[0]);
+  //await tx.wait();
+};
+
+//getLocation();
 
 // const checkGps = async () => {
 //   try {

@@ -694,6 +694,11 @@
                 "internalType": "uint256",
                 "name": "tokenId",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "publicKey",
+                "type": "bytes32"
             }
         ],
         "name": "getNFTLocation",
@@ -701,34 +706,34 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "northLat",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "southLat",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "eastLon",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "westLon",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "bytes",
                         "name": "lat",
-                        "type": "uint256"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "bytes",
                         "name": "lng",
-                        "type": "uint256"
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct NFTLocation",
@@ -745,6 +750,11 @@
                 "internalType": "uint256",
                 "name": "tokenId",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "publicKey",
+                "type": "bytes32"
             }
         ],
         "name": "getNFTLocationForOwner",
@@ -752,34 +762,34 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "northLat",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "southLat",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "eastLon",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint32",
+                        "internalType": "bytes",
                         "name": "westLon",
-                        "type": "uint32"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "bytes",
                         "name": "lat",
-                        "type": "uint256"
+                        "type": "bytes"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "bytes",
                         "name": "lng",
-                        "type": "uint256"
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct NFTLocation",
@@ -1494,13 +1504,6 @@
             }
         ],
         "name": "withdrawToken",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "withdraws",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

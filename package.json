@@ -21,7 +21,7 @@
     "ethereum-event-processor": "^5.1.2",
     "ethers": "^5.7.2",
     "express": "^4.18.2",
-    "fhevmjs": "^0.2.1",
+    "fhevmjs": "^0.2.2",
     "jsonwebtoken": "^9.0.2",
     "log4js": "^6.9.1",
     "node-telegram-bot-api": "^0.64.0",

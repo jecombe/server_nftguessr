@@ -9,14 +9,16 @@ var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
+const pathNftsInco = path.resolve(__dirname, "../../locations/nftsInco.json");
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 dotenv.config();
 
 class ManagerFile {
-  constructor(utiles) {
+  constructor(utiles, chain) {
     this.utiles = utiles;
+    this.chain = chain;
   }
 
   writeFile(filePath, data) {
@@ -88,13 +90,14 @@ class ManagerFile {
   }
 
   async manageFiles(req) {
-    const { nftIds, fee, isReset } = req;
+    const { nftIds, fee, isReset, chain } = req;
     const relacherVerrou = await mutex.acquire();
     const id = nftIds[0];
     const feeSave = Object.values(fee[0])[0];
     try {
+      const pathFile = chain === "inco" ? pathNftsInco : pathNfts;
       // Lire le fichier JSON de manière asynchrone
-      const data = await this.readFile(pathNfts, "utf-8");
+      const data = await this.readFile(pathFile, "utf-8");
       const nftsData = JSON.parse(data);
 
       // Mettre à jour les données en fonction de l'événement Solidity
@@ -102,7 +105,7 @@ class ManagerFile {
         nftsData[id].tax = Number(feeSave); // Mettez à jour la propriété en fonction de vos besoins
         nftsData[id].isValid = isReset;
         // Écrire de manière asynchrone les données mises à jour dans le fichier JSON
-        await this.writeFile(pathNfts, nftsData);
+        await this.writeFile(pathFile, nftsData);
         loggerServer.info(`manageFiles update nft ${id} with fees: ${feeSave}`);
       } else {
         loggerServer.error(`Aucun objet trouvé pour l'ID ${id}`);
@@ -117,11 +120,12 @@ class ManagerFile {
     }
   }
 
-  async writeNewNft(user, tokenIdReadable, feeReadable, nb) {
+  async writeNewNft(user, tokenIdReadable, feeReadable, nb, chain) {
     const relacherVerrou = await mutex.acquire();
 
     try {
-      const data = await this.readFile(pathNfts);
+      const pathFile = chain === "inco" ? pathNftsInco : pathNfts;
+      const data = await this.readFile(pathFile);
       let nftsData = JSON.parse(data);
 
       loggerServer.trace(`createNFT ${tokenIdReadable} `);
@@ -136,7 +140,7 @@ class ManagerFile {
       if (!nftsData[tokenIdReadable]) {
         nftsData[tokenIdReadable] = toWrite;
 
-        await this.writeFile(pathNfts, nftsData);
+        await this.writeFile(pathFile, nftsData);
       } else {
         throw new Error(
           `user ${user} NFT with the same ID: ${tokenIdReadable} already exists.`
@@ -153,6 +157,7 @@ class ManagerFile {
 class Utiles {
   constructor() {
     this.managerFile = new ManagerFile(this);
+    // this.managerFileInco = new ManagerFile(this, "inco");
   }
   convertArrayIdBigNumberToNumber(array) {
     return array.map((bigNumber) => Number(bigNumber));
