@@ -4,11 +4,11 @@ const { createNft } = require("./interactChain/SmartContract");
 
 const startCreationNft = async (numberNFT) => {
   try {
-    loggerScript.trace("start startCreationNft");
-    await randomLocation(numberNFT);
+    // loggerScript.trace("start startCreationNft");
+    // await randomLocation(numberNFT);
     loggerScript.trace("creation random gps point ok");
     const response = await createNft();
-    loggerScript("Success create: ", response);
+    loggerScript.log("Success create: ", response);
   } catch (error) {
     loggerScript.fatal("fatal error startCreationNft", error);
     return error;
