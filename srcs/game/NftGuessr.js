@@ -42,7 +42,7 @@ class NftGuessr {
     this.contract = contract;
     this.contractSign = contractSign;
     this.provider = provider;
-    // this.telegram = telegram;
+    this.telegram = telegram;
   }
 
   async init() {
