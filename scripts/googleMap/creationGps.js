@@ -11,7 +11,7 @@ const readFile = util.promisify(fs.readFile);
 
 // Remplacez 'YOUR_API_KEY' par votre propre clé d'API Google Maps
 const googleMapsClient = require("@google/maps").createClient({
-  key: "AIzaSyD0ZKYS4E9Sl1izucojjOl3nErVLN2ixVQ",
+  key: process.env.GOOGLE_MAP_CLIENT,
   Promise: Promise,
 });
 
