@@ -6,6 +6,7 @@ const path = require("path");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
+const { createInstance } = require("fhevmjs");
 
 dotenv.config();
 
@@ -16,11 +17,45 @@ const contract = new Contract(contractAddress, nftGuessrAbi, provider);
 const signer = new Wallet(process.env.SECRET, provider);
 const contractSign = new Contract(process.env.CONTRACT, nftGuessrAbi, signer);
 
+const getInstance = async (provi) => {
+  const network = await provi.getNetwork();
+
+  const chainId = +network.chainId.toString();
+
+  const publicKey = await provi.call({
+    to: "0x0000000000000000000000000000000000000044",
+  });
+
+  return createInstance({ chainId, publicKey });
+};
+const getToken = async (instanceNftGuessr, verifyingContract) => {
+  return instanceNftGuessr.generateToken({
+    name: "Authentication",
+    verifyingContract,
+  });
+};
+
 class NftGuessr {
   constructor(utiles, telegram) {
     this.utiles = utiles;
+    this.addrContrat = process.env.CONTRACT;
+    this.contract = contract;
+    this.contractSign = contractSign;
+    this.provider = provider;
+    // this.telegram = telegram;
+  }
 
-    this.telegram = telegram;
+  async init() {
+    this.instance = await getInstance(this.provider);
+    this.signParam = await getToken(this.instance, this.addrContrat);
+  }
+
+  parseDecrypt(array) {
+    return array.map((value) => this.decrypt(value));
+  }
+
+  decrypt(data) {
+    this.instance.decrypt(this.addrContrat, data);
   }
 
   getObjectCreationAndFees(array) {
@@ -247,10 +282,10 @@ class NftGuessr {
             `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
           );
         } else {
-          const message = `💰 A user lose ${formatTokenId} 💰`;
+          const message = `A user lose ${formatTokenId}`;
           loggerServer.info(`GpsCheckResult: ${message}`);
           this.telegram.sendMessageLog({
-            message: `GpsCheckResult winner ${formatTokenId}`,
+            message: `GpsCheckResult lose ${formatTokenId}`,
           });
         }
       } catch (error) {
@@ -275,11 +310,12 @@ class NftGuessr {
       );
       try {
         const nb = await this.getNFTLocation(tokenIdReadable);
+        const parsedResult = this.parseDecrypt(nb);
         await this.utiles.managerFile.writeNewNft(
           user,
           tokenIdReadable,
           feeReadable,
-          nb
+          parsedResult
         );
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
