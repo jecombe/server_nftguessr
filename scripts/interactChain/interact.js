@@ -11,6 +11,7 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
+const contractAirdrop = require("../../abi/airdrop.json");
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
@@ -31,48 +32,70 @@ const getInstance = async () => {
   return _instance;
 };
 
-const changeThreshold = async () => {
-  const signer = new Wallet(sign, provider);
-
-  // Initialize contract with ethers
-  const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
-  // Get instance to encrypt amount parameter
-  const instance = await getInstance();
-  const encryptedAmount0 = instance.encrypt32(100 * 100);
-
-  const transaction = await contract["changeThreshold(bytes)"](
-    encryptedAmount0
-  );
-  return transaction;
-};
-
 const setAddressToken = async () => {
   const signer = new Wallet(sign, provider);
 
   // Initialize contract with ethers
   const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+  const contractAir = new Contract(
+    process.env.AIRDROP,
+    contractAirdrop,
+    signer
+  );
+
+  try {
+    // Get instance to encrypt amount parameter
+    const tx = await contract.setAddressToken(process.env.TOKEN, {
+      gasLimit: 10000000,
+    });
+    await tx.wait();
+    const tx3 = await contract.setAddressGame(process.env.GAME, {
+      gasLimit: 10000000,
+    });
+    await tx3.wait();
+    const tx2 = await contract.setAddressAirdropToken(
+      process.env.AIRDROP,
+      process.env.TOKEN,
+      {
+        gasLimit: 10000000,
+      }
+    );
+    await tx2.wait();
+    const tx0 = await contract.setDistribution({
+      gasLimit: 10000000,
+    });
+    return tx0.wait();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const withdrawTeamsNftGuessr = async () => {
+  const signer = new Wallet(sign, provider);
+  const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
+
+  // Initialize contract with ethers
 
   // Get instance to encrypt amount parameter
-  const tx = await contract.setAddressToken(process.env.TOKEN, {
+  const tx = await contract.claimRewardTeams({
     gasLimit: 10000000,
   });
 
   return tx.wait();
 };
 
-const getToken = async () => {
+const withdrawTeamsAirdrop = async () => {
   const signer = new Wallet(sign, provider);
-
-  // Initialize contract with ethers
   const contract = new Contract(CONTRACT_ADDRESS, contractInfo, signer);
 
+  // Initialize contract with ethers
+
   // Get instance to encrypt amount parameter
-  const tx = await contract.getToken({
+  const tx = await contract.claimAirDropTeams({
     gasLimit: 10000000,
   });
 
-  await tx.wait();
-  return tx;
+  return tx.wait();
 };
 
 const testMint = async () => {
@@ -150,4 +173,12 @@ const start = async () => {
   console.log(res);
 };
 
-start();
+const withdrawGame = async () => {
+  try {
+    await withdrawTeamsNftGuessr();
+  } catch (error) {
+    console.log(error);
+  }
+};
+withdrawGame();
+//xstart();

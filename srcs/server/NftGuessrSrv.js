@@ -11,7 +11,7 @@ const port = 8000;
 
 class Server {
   constructor() {
-    this.telegram = new Telegram(this.utiles, this.nftGuessr);
+    // this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.utiles = new Utiles();
     this.nftGuessr = new NftGuessr(this.utiles, this?.telegram);
     this.mapGoogle = new Map();
@@ -33,18 +33,7 @@ class Server {
       }
     });
   }
-  getMinimumStake() {
-    app.get("/api/get-minimum-nft-stake", async (req, res) => {
-      try {
-        const nftsStake = await this.nftGuessr.getNbStake();
-        res.json(nftsStake.toString());
-        loggerServer.trace("get-minimum-nft-stake.");
-      } catch (error) {
-        loggerServer.error("get-minimum-nft-stake", error);
-        res.status(500).send("Error intern server (4).");
-      }
-    });
-  }
+
   getFeesCreation() {
     app.get("/api/get-fees-creation", async (req, res) => {
       try {
@@ -72,18 +61,6 @@ class Server {
     });
   }
 
-  getRewardStaker() {
-    app.get("/api/get-reward-staker", async (req, res) => {
-      try {
-        const nftsStake = await this.nftGuessr.getAmountRewardUsers();
-        res.json(nftsStake.toString());
-        loggerServer.trace("get-total-nft-stake.");
-      } catch (error) {
-        loggerServer.error("get-total-nft-stake.", error);
-        res.status(500).send("Error intern server (3).");
-      }
-    });
-  }
   getTotalNft() {
     app.get("/api/get-total-nft", async (req, res) => {
       try {
@@ -116,6 +93,7 @@ class Server {
     app.get("/api/get-holder-and-token", async (req, res) => {
       try {
         const result = await this.nftGuessr.getAllAddressesAndTokenIds();
+        console.log(result);
         res.json(result);
         loggerServer.trace("get-holder-and-token");
       } catch (error) {
@@ -157,9 +135,9 @@ class Server {
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        this.telegram.sendMessageLog({
-          message: "error check-new-coordinates",
-        });
+        // this.telegram.sendMessageLog({
+        //   message: "error check-new-coordinates",
+        // });
         res.status(500).send("Error intern server (7).");
       }
     });
@@ -167,9 +145,7 @@ class Server {
 
   getApi() {
     this.getFees();
-    this.getMinimumStake();
     this.getFeesCreation();
-    this.getRewardStaker();
     this.getRewardWinner();
     this.getTotalNft();
     this.getHolderAndTokens();
@@ -185,32 +161,12 @@ class Server {
     });
   }
 
-  async rewardUsers() {
-    try {
-      loggerServer.trace("start reward");
-      const rep = await this.nftGuessr.rewardUsersWithERC20();
-      await rep.wait();
-      loggerServer.info("Reward success !");
-      this.telegram.sendMessageGroup(
-        `💵 New Reward for staker, next one in 24h 💵`
-      );
-    } catch (error) {
-      loggerServer.fatal("rewardUsers", error);
-      this.telegram.sendMessageLog({ message: "error rewardUsers" });
-      return error;
-    }
-  }
-
-  async startIntervals() {
-    const intervalInMilliseconds = 24 * 60 * 60 * 1000; // 24 hours
-    loggerServer.trace("Start interval reward");
-    setInterval(this.rewardUsers.bind(this), intervalInMilliseconds);
-  }
-  startServer() {
+  async startServer() {
     //this.startFetchStats();
     this.startApp();
     this.getApi();
-    this.startIntervals();
+    await this.nftGuessr.init();
+
     this.nftGuessr.startListeningEvents();
   }
 }

@@ -117,7 +117,7 @@ class ManagerFile {
     }
   }
 
-  async writeNewNft(user, tokenIdReadable, feeReadable, nb) {
+  async writeNewNft(user, tokenIdReadable, feeReadable, arrayGps) {
     const relacherVerrou = await mutex.acquire();
 
     try {
@@ -127,10 +127,9 @@ class ManagerFile {
       loggerServer.trace(`createNFT ${tokenIdReadable} `);
 
       const toWrite = this.utiles.formatNftToJson(
-        nb,
+        arrayGps,
         feeReadable,
-        tokenIdReadable,
-        true
+        tokenIdReadable
       );
 
       if (!nftsData[tokenIdReadable]) {
@@ -196,26 +195,23 @@ class Utiles {
       process.env.KEY
     ).toString();
   }
-  formatNftToJson(nb, tax, nftId, isValid) {
-    const tableauNombres = this.convertArrayIdBigNumberToNumber(nb);
 
-    const latitude = tableauNombres[4];
-    const longitude = tableauNombres[5];
+  formatNftToJson(arrayGps, tax, nftId) {
+    // const tableauNombres = this.convertArrayIdBigNumberToNumber(nb);
 
-    const convertLat = this.formaterNumber(latitude);
-    const convertLng = this.formaterNumber(longitude);
+    const lat = arrayGps[0];
+    const lng = arrayGps[1];
+
+    const convertLat = this.formaterNumber(lat);
+    const convertLng = this.formaterNumber(lng);
     const r = {
-      isValid,
+      isValid: true,
       latitude: Number(convertLat),
       longitude: Number(convertLng),
-      northLat: tableauNombres[0],
-      southLat: tableauNombres[1],
-      eastLon: tableauNombres[2],
-      westLon: tableauNombres[3],
       tax,
       id: Number(nftId),
-      lat: tableauNombres[4],
-      lng: tableauNombres[5],
+      lat,
+      lng,
     };
     return r;
   }

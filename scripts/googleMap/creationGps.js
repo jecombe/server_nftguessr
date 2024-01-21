@@ -86,28 +86,9 @@ Longitude : 90 à 180 degrés (est)
 ******************************************************************* */
 
 const getRandomLocationInRegionRange32 = (minLat, maxLat, minLng, maxLng) => {
-  const maxUint32 = 4294967295;
-
-  // Génération de nombres aléatoires pour la latitude et la longitude
   const latitude = Math.random() * (maxLat - minLat) + minLat;
   const longitude = Math.random() * (maxLng - minLng) + minLng;
-
-  // // Convertir les coordonnées en plages uint32
-  // const uint32Latitude = Math.floor((latitude / 90) * maxUint32);
-  // const uint32Longitude = Math.floor((longitude / 180) * maxUint32);
-
-  // // Vérifier si les valeurs sont dans la plage uint32
-  // if (
-  //   uint32Latitude >= 0 &&
-  //   uint32Latitude <= maxUint32 &&
-  //   uint32Longitude >= 0 &&
-  //   uint32Longitude <= maxUint32
-  // ) {
   return { latitude, longitude };
-  // } else {
-  //   // Sinon, renvoyer null pour latitude et longitude
-  //   return { latitude: null, longitude: null };
-  // }
 };
 
 const randomGeo = () => {

@@ -1,6 +1,8 @@
 const { Contract, Wallet, ethers } = require("ethers");
 const dotenv = require("dotenv");
 const nftGuessrAbi = require("../../abi/NftGuessr.json");
+const GameAbi = require("../../abi/game.json");
+
 const { loggerServer } = require("../utils/logger");
 const path = require("path");
 var Mutex = require("async-mutex").Mutex;
@@ -8,31 +10,48 @@ const mutex = new Mutex();
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
 const { createInstance } = require("fhevmjs");
 
+let _instance;
+
 dotenv.config();
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 const contractAddress = process.env.CONTRACT;
 
 const contract = new Contract(contractAddress, nftGuessrAbi, provider);
+
 const signer = new Wallet(process.env.SECRET, provider);
-const contractSign = new Contract(process.env.CONTRACT, nftGuessrAbi, signer);
+// const contractGame = new Contract(process.env.GAME, GameAbi, provider, signer);
+const contractGame = new Contract(process.env.GAME, GameAbi, signer);
 
-const getInstance = async (provi) => {
-  const network = await provi.getNetwork();
-
+const createFhevmInstance = async () => {
+  const network = await provider.getNetwork();
   const chainId = +network.chainId.toString();
-
-  const publicKey = await provi.call({
+  const publicKey = await provider.call({
+    from: null,
     to: "0x0000000000000000000000000000000000000044",
   });
-
-  return createInstance({ chainId, publicKey });
+  _instance = await createInstance({ chainId, publicKey });
 };
-const getToken = async (instanceNftGuessr, verifyingContract) => {
-  return instanceNftGuessr.generateToken({
-    name: "Authentication",
-    verifyingContract,
-  });
+
+const getInstance = () => {
+  return _instance;
+};
+
+const getTokenSignature = async (contractAddress, userAddress) => {
+  if (getInstance().hasKeypair(contractAddress)) {
+    return getInstance().getTokenSignature(contractAddress);
+  } else {
+    const generatedToken = getInstance().generatePublicKey({
+      verifyingContract: process.env.GAME,
+    });
+    const signature = await signer._signTypedData(
+      generatedToken.eip712.domain,
+      { Reencrypt: generatedToken.eip712.types.Reencrypt }, // Need to remove EIP712Domain from types
+      generatedToken.eip712.message
+    );
+    getInstance().setSignature(contractAddress, signature);
+    return { signature, publicKey: generatedToken.publicKey };
+  }
 };
 
 class NftGuessr {
@@ -40,22 +59,12 @@ class NftGuessr {
     this.utiles = utiles;
     this.addrContrat = process.env.CONTRACT;
     this.contract = contract;
-    this.contractSign = contractSign;
     this.provider = provider;
-    this.telegram = telegram;
+    // this.telegram = telegram;
   }
 
   async init() {
-    this.instance = await getInstance(this.provider);
-    this.signParam = await getToken(this.instance, this.addrContrat);
-  }
-
-  parseDecrypt(array) {
-    return array.map((value) => this.decrypt(value));
-  }
-
-  decrypt(data) {
-    this.instance.decrypt(this.addrContrat, data);
+    await createFhevmInstance();
   }
 
   getObjectCreationAndFees(array) {
@@ -69,15 +78,7 @@ class NftGuessr {
   }
 
   async getFee(address, nftId) {
-    return contractSign.getFee(address, nftId);
-  }
-
-  async getTotalStakedNFTs() {
-    return contract.getTotalStakedNFTs();
-  }
-
-  getNbStake() {
-    return contract.nbNftStake();
+    return contract.getFee(address, nftId);
   }
 
   getFeesCreation() {
@@ -93,13 +94,17 @@ class NftGuessr {
   getObjectStatsGame() {
     return {
       nfts: [],
-      nftsStake: [],
       nftsReset: [],
       nftsCreation: [],
     };
   }
-  getNFTLocation(nftId) {
-    return contractSign.getNFTLocation(nftId);
+  async getNFTLocation(nftId) {
+    // return contractSign.getNFTLocation(nftId);
+    const { signature, publicKey } = await getTokenSignature();
+
+    // const { signature, publicKey } = await getTokenSignature(this.instance);
+
+    return contractGame.getNFTLocation(nftId, publicKey, signature);
   }
 
   createOrGetOwnerObject(addressToTokenIds, owner) {
@@ -109,31 +114,21 @@ class NftGuessr {
     return addressToTokenIds[owner];
   }
 
-  async getAddressStakeWithToken(tokenId) {
-    return contract.getAddressStakeWithToken(tokenId);
-  }
   async getAddressResetWithToken(tokenId) {
-    return contract.getAddressResetWithToken(tokenId);
+    return contractGame.getAddressResetWithToken(tokenId);
   }
   async getAddressCreationWithToken(tokenId) {
-    return contract.getAddressCreationWithToken(tokenId);
+    return contractGame.getAddressCreationWithToken(tokenId);
   }
   async getResetNFTsAndFeesByOwner(address) {
-    return contract.getResetNFTsAndFeesByOwner(address);
-  }
-  async getNFTsStakedByOwner(address) {
-    return contract.getNFTsStakedByOwner(address);
+    return contractGame.getResetNFTsAndFeesByOwner(address);
   }
   async getNftCreationAndFeesByUser(address) {
-    return contract.getNftCreationAndFeesByUser(address);
-  }
-
-  async rewardUsersWithERC20() {
-    return contractSign.rewardUsersWithERC20();
+    return contractGame.getNftCreationAndFeesByUser(address);
   }
 
   async getTotalResetNFTs() {
-    return contract.getTotalResetNFTs();
+    return contractGame.getTotalResetNFTs();
   }
 
   async getRandomLocation() {
@@ -162,7 +157,7 @@ class NftGuessr {
       const obj = this.createOrGetOwnerObject(addressToTokenIds, addrReset);
 
       const nftsResetAndFees = this.getObjectCreationAndFees(
-        await contract.getResetNFTsAndFeesByOwner(addrReset)
+        await contractGame.getResetNFTsAndFeesByOwner(addrReset)
       );
       obj.nftsReset = nftsResetAndFees;
     } catch (error) {
@@ -171,18 +166,6 @@ class NftGuessr {
     }
   }
 
-  async manageDataStake(addressToTokenIds, addrStake) {
-    try {
-      const obj = this.createOrGetOwnerObject(addressToTokenIds, addrStake);
-      const nftsStake = await this.getNFTsStakedByOwner(addrStake);
-      const nftsstaked = nftsStake.map((bigNumber) => Number(bigNumber));
-
-      obj.nftsStake = nftsstaked;
-    } catch (error) {
-      loggerServer.error("manageDataStake", error);
-      return error;
-    }
-  }
   async manageDataCreator(addressToTokenIds, addrCreator) {
     try {
       const obj = this.createOrGetOwnerObject(addressToTokenIds, addrCreator);
@@ -204,16 +187,11 @@ class NftGuessr {
 
     objectPrincipal.nfts.push(tokenId);
     try {
-      const addrStake = await this.getAddressStakeWithToken(tokenId);
       const addrReset = await this.getAddressResetWithToken(tokenId);
       const addrCreator = await this.getAddressCreationWithToken(tokenId);
 
       if (addrReset !== "0x0000000000000000000000000000000000000000") {
         await this.manageDataReset(addressToTokenIds, addrReset);
-      }
-
-      if (addrStake !== "0x0000000000000000000000000000000000000000") {
-        await this.manageDataStake(addressToTokenIds, addrStake);
       }
 
       if (
@@ -229,11 +207,13 @@ class NftGuessr {
   }
 
   async getAllAddressesAndTokenIds() {
-    const totalSupply = await contract.totalSupply();
+    const totalSupply = await contractGame.totalSupply();
+    console.log("::::::::::::::::::::", totalSupply);
     const addressToTokenIds = {};
     const promises = [];
     for (let i = 1; i <= totalSupply; i++) {
-      const currentOwner = await contract.ownerOf(i);
+      const currentOwner = await contractGame.ownerOf(i);
+      console.log(currentOwner.toString());
       promises.push(
         this.getAddressToTokenIds(currentOwner, i, addressToTokenIds)
       );
@@ -250,13 +230,15 @@ class NftGuessr {
 
   async getTotalNft() {
     try {
-      const totalNFTs = await contract.getTotalNft();
+      const totalNFTs = await contractGame.getTotalNft();
       return totalNFTs.toString();
     } catch (error) {
       loggerServer.error("error getTotalNft", error);
       return error;
     }
   }
+
+  start;
 
   startGpsCheckResultListener() {
     loggerServer.trace("Listening for GpsCheckResult events...");
@@ -275,24 +257,24 @@ class NftGuessr {
           });
           const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          this.telegram.sendMessageLog({
-            message: `GpsCheckResult ${message}`,
-          });
-          this.telegram.sendMessageGroup(
-            `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-          );
+          // this.telegram.sendMessageLog({
+          //   message: `GpsCheckResult ${message}`,
+          // });
+          // this.telegram.sendMessageGroup(
+          //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+          // );
         } else {
           const message = `A user lose ${formatTokenId}`;
           loggerServer.info(`GpsCheckResult: ${message}`);
-          this.telegram.sendMessageLog({
-            message: `GpsCheckResult lose ${formatTokenId}`,
-          });
+          // this.telegram.sendMessageLog({
+          //   message: `GpsCheckResult lose ${formatTokenId}`,
+          // });
         }
       } catch (error) {
         loggerServer.fatal(`startGpsCheckResultListener: `, error);
-        this.telegram.sendMessageLog({
-          message: `Error GpsCheckResult ${formatTokenId}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `Error GpsCheckResult ${formatTokenId}`,
+        // });
       }
     });
   }
@@ -310,27 +292,29 @@ class NftGuessr {
       );
       try {
         const nb = await this.getNFTLocation(tokenIdReadable);
-        const parsedResult = this.parseDecrypt(nb);
+        const lat = getInstance().decrypt(process.env.GAME, nb[0]);
+        const lng = getInstance().decrypt(process.env.GAME, nb[1]);
+
         await this.utiles.managerFile.writeNewNft(
           user,
           tokenIdReadable,
           feeReadable,
-          parsedResult
+          [lat, lng]
         );
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        this.telegram.sendMessageLog({
-          message: `createNFT ${tokenIdReadable}`,
-        });
-        this.telegram.sendMessageGroup(
-          `💎 New NFT create with id ${tokenIdReadable} 💎`
-        );
+        // this.telegram.sendMessageLog({
+        //   message: `createNFT ${tokenIdReadable}`,
+        // });
+        // this.telegram.sendMessageGroup(
+        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
+        // );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal createNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal createNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
@@ -356,43 +340,106 @@ class NftGuessr {
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal ResetNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
   }
 
-  startRewardWithERC20Listener() {
-    loggerServer.trace("Listening for RewardWithERC20 events...");
+  startRewardCreatorsListener() {
+    loggerServer.trace("Listening for RewardCreators events...");
 
-    contract.on("RewardWithERC20", async (user, amount) => {
+    contract.on("RewardCreators", async (user, amount, balance) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      const balanceRead = Number(this.utiles.convertWeiToEth(balance));
+
+      loggerServer.info(
+        `RewardCreators Event - Creator: ${user}, Amount: ${amountReadable}, Balance: ${balanceRead} SPC`
+      );
+    });
+  }
+  startRewardCreatorFeeListener() {
+    loggerServer.trace("Listening for RewardCreatorFees events...");
+
+    contract.on("RewardCreatorFees", async (user, amount, balance) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      const balanceRead = Number(this.utiles.convertWeiToEth(balance));
+
+      loggerServer.info(
+        `RewardCreatorFees Event - Creator: ${user}, Amount: ${amountReadable}, Balance ${balanceRead} INCO`
+      );
+    });
+  }
+  startRewardOwnerFeeListener() {
+    loggerServer.trace("Listening for RewardOwnerFees events...");
+
+    contract.on("RewardOwnerFees", async (user, amount, balance) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
       loggerServer.info(
-        `RewardWithERC20 Event - User: ${user}, Amount: ${amountReadable}`
+        `RewardOwnerFees Event - Owner: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
       );
     });
   }
+  startRewardTeams() {
+    loggerServer.trace("Listening for RewardTeams events...");
 
-  startStakingListener() {
-    loggerServer.trace("Listening for StakingNFT events...");
-
-    contract.on("StakingNFT", async (user, tokenId, timestamp, isStake) => {
-      const tokenIdReadable = tokenId.toString();
-
+    contract.on("RewardTeams", async (user, amount, balance) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
       loggerServer.info(
-        `StakingNFT Event - User: ${user},TokenId: ${tokenIdReadable} isStake: ${isStake} Timestamp: ${timestamp}`
+        `RewardTeams Event - Teams: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
       );
     });
   }
+  startRewardStakers() {
+    loggerServer.trace("Listening for RewardStakers events...");
+
+    contract.on("RewardStakers", async (user, amount, balance) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      loggerServer.info(
+        `RewardStakers Event - User: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
+      );
+    });
+  }
+
+  startRewardWithERC20Listener() {
+    loggerServer.trace("Listening for RewardWinner events...");
+
+    contract.on("RewardWinner", async (user, amount) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      loggerServer.info(
+        `RewardWinner Event - User: ${user}, Amount: ${amountReadable}`
+      );
+    });
+  }
+
+  // async test() {
+  //   try {
+  //     console.log("OKOKOKOKOKOKOKOKO");
+  //     const nb = await this.getNFTLocation(1);
+  //     console.log(nb);
+  //     const lat = getInstance().decrypt(process.env.GAME, nb[0]);
+  //     const lng = getInstance().decrypt(process.env.GAME, nb[1]);
+
+  //     // const res = this.parseDecrypt(nb);
+  //     console.log([lat, lng]);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
 
   startListeningEvents() {
     this.startCreateNFTListener();
     this.startGpsCheckResultListener();
     this.startRewardWithERC20Listener();
-    this.startStakingListener();
     this.startResetNFTListener();
+    this.startRewardCreatorFeeListener();
+    this.startRewardCreatorsListener();
+    this.startRewardOwnerFeeListener();
+    this.startRewardStakers();
+    this.startRewardTeams();
+    //this.test();
   }
 }
 
