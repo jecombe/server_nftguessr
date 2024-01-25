@@ -61,10 +61,30 @@ class Server {
     });
   }
 
+  getGameStats() {
+    app.get("/api/get-statGame", async (req, res) => {
+      try {
+        const totalNft = await this.nftGuessr.getTotalNft();
+        const data = {
+          feesGuess: 2,
+          feesMint: 1,
+          rewardWinner: 1,
+          rewardStakers: 1,
+          rewardCreators: 1,
+          totalNft,
+        };
+        res.json(data);
+      } catch (error) {
+        return error;
+      }
+    });
+  }
+
   getTotalNft() {
     app.get("/api/get-total-nft", async (req, res) => {
       try {
         const holdersAndTokenIds = await this.nftGuessr.getTotalNft();
+
         res.json(holdersAndTokenIds);
         loggerServer.trace("get-total-nft");
       } catch (error) {
@@ -93,7 +113,6 @@ class Server {
     app.get("/api/get-holder-and-token", async (req, res) => {
       try {
         const result = await this.nftGuessr.getAllAddressesAndTokenIds();
-        console.log(result);
         res.json(result);
         loggerServer.trace("get-holder-and-token");
       } catch (error) {
@@ -148,6 +167,7 @@ class Server {
     this.getFeesCreation();
     this.getRewardWinner();
     this.getTotalNft();
+    this.getGameStats();
     this.getHolderAndTokens();
     this.getGps();
     this.checkGpsCoordinates();

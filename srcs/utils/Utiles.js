@@ -9,6 +9,7 @@ var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 
 const pathNfts = path.resolve(__dirname, "../../locations/nfts.json");
+const pathStats = path.resolve(__dirname, "../../locations/stats.json");
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -85,6 +86,149 @@ class ManagerFile {
 
     // Utilisez let ici pour déclarer saveLocations
     return { locationsToAdd };
+  }
+
+  deleteTokenId(tokenId, data, prev) {
+    data.forEach((item) => {
+      // Parcourir chaque objet dans dataArray
+      const addressObject = Object.values(item)[0]; // Obtenir l'objet de l'adresse
+      if (addressObject && addressObject.tokenReset) {
+        // Si l'objet a un tableau tokenReset
+        const tokenResetIndex = addressObject.tokenReset.findIndex(
+          (token) => token.id === Number(tokenId)
+        );
+        if (tokenResetIndex !== -1) {
+          // Si le tokenId est trouvé, le supprimer du tableau tokenReset
+          addressObject.tokenReset.splice(tokenResetIndex, 1);
+
+          // Si le tableau tokenReset est vide, supprimer l'objet principal
+          // if (addressObject.tokenReset.length === 0) {
+          //   delete item[Object.keys(item)[0]];
+          // }
+        }
+      }
+    });
+  }
+
+  createdTokenId(address, tokenId, tax, dataArray) {
+    // Vérifier si l'adresse existe déjà dans le tableau
+    const addressObject = dataArray.find((item) => address in item);
+
+    if (addressObject) {
+      // Si l'adresse existe, ajouter le tokenId dans le tableau tokenIdCreated
+      addressObject[address].tokenIdCreated.push(tokenId);
+
+      // Ajouter le tokenId dans le tableau tokenReset (s'il n'existe pas déjà)
+      const tokenResetIndex = addressObject[address].tokenReset.findIndex(
+        (token) => token.id === tokenId
+      );
+
+      if (tokenResetIndex === -1) {
+        addressObject[address].tokenReset.push({ id: tokenId, feesWin: tax });
+      }
+    } else {
+      // Si l'adresse n'existe pas, l'ajouter avec des tableaux vides
+      const newAddressObject = {
+        [address]: {
+          tokenReset: [{ id: tokenId, feesWin: tax }],
+          tokenIdCreated: [],
+        },
+      };
+
+      dataArray.push(newAddressObject);
+    }
+  }
+
+  resetTokenId(address, tokenId, tax, dataArray) {
+    // Vérifier si l'adresse existe déjà dans le tableau
+    const addressObject = dataArray.find((item) => address in item);
+
+    if (addressObject) {
+      const tokenIndex = addressObject[address].tokenReset.findIndex(
+        (token) => token.id === tokenId
+      );
+
+      if (tokenIndex !== -1) {
+        // Si le tokenId existe, mettre à jour la taxe
+        addressObject[address].tokenReset[tokenIndex].feesWin = tax;
+      } else {
+        // Si le tokenId n'existe pas, ajouter une nouvelle entrée dans le tableau
+        addressObject[address].tokenReset.push({ id: tokenId, feesWin: tax });
+      }
+    }
+  }
+
+  async writeStatsReset(player, tokenId, tax) {
+    const relacherVerrou = await mutex.acquire();
+    try {
+      // Lire le fichier JSON de manière asynchrone
+      const data = await this.readFile(pathStats, "utf-8");
+      const nftsData = JSON.parse(data);
+      this.resetTokenId(player, tokenId, tax, nftsData);
+
+      await this.writeFile(pathStats, nftsData);
+    } catch (error) {
+      loggerServer.fatal("error manage file", error);
+
+      throw `manageFiles ${error}`;
+    } finally {
+      loggerServer.trace("unlock");
+      relacherVerrou();
+    }
+  }
+
+  async writeFileStatsCreate(player, tokenId, tax) {
+    const relacherVerrou = await mutex.acquire();
+    try {
+      // Lire le fichier JSON de manière asynchrone
+      const data = await this.readFile(pathStats, "utf-8");
+      const nftsData = JSON.parse(data);
+      this.createdTokenId(player, tokenId, tax, nftsData);
+
+      await this.writeFile(pathStats, nftsData);
+    } catch (error) {
+      loggerServer.fatal("error manage file", error);
+
+      throw `manageFiles ${error}`;
+    } finally {
+      loggerServer.trace("unlock");
+      relacherVerrou();
+    }
+  }
+
+  async manageFilesSats(player, previous, tokenId) {
+    const relacherVerrou = await mutex.acquire();
+    try {
+      // Lire le fichier JSON de manière asynchrone
+      const data = await this.readFile(pathStats, "utf-8");
+      const nftsData = JSON.parse(data);
+      this.deleteTokenId(tokenId, nftsData, previous);
+
+      await this.writeFile(pathStats, nftsData);
+      console.log(
+        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOook"
+      );
+    } catch (error) {
+      loggerServer.fatal("error manage file", error);
+
+      throw `manageFiles ${error}`;
+    } finally {
+      loggerServer.trace("unlock");
+      relacherVerrou();
+    }
+  }
+
+  async getStats() {
+    const relacherVerrou = await mutex.acquire();
+    try {
+      const data = await this.readFile(pathStats, "utf-8");
+      return JSON.parse(data);
+    } catch (error) {
+      return error;
+    } finally {
+      loggerServer.trace("unlock");
+      relacherVerrou();
+    }
   }
 
   async manageFiles(req) {

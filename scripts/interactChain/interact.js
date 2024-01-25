@@ -180,5 +180,5 @@ const withdrawGame = async () => {
     console.log(error);
   }
 };
-withdrawGame();
-//xstart();
+//withdrawGame();
+start();

@@ -2,6 +2,7 @@ const { Contract, Wallet, ethers } = require("ethers");
 const dotenv = require("dotenv");
 const nftGuessrAbi = require("../../abi/NftGuessr.json");
 const GameAbi = require("../../abi/game.json");
+const locations = require("../../locations/nfts.json");
 
 const { loggerServer } = require("../utils/logger");
 const path = require("path");
@@ -20,16 +21,24 @@ const contractAddress = process.env.CONTRACT;
 const contract = new Contract(contractAddress, nftGuessrAbi, provider);
 
 const signer = new Wallet(process.env.SECRET, provider);
-// const contractGame = new Contract(process.env.GAME, GameAbi, provider, signer);
 const contractGame = new Contract(process.env.GAME, GameAbi, signer);
 
 const createFhevmInstance = async () => {
+  if (_instance) return _instance;
+
   const network = await provider.getNetwork();
+
   const chainId = +network.chainId.toString();
-  const publicKey = await provider.call({
-    from: null,
-    to: "0x0000000000000000000000000000000000000044",
+
+  const ret = await provider.call({
+    to: "0x000000000000000000000000000000000000005d",
+    data: "0xd9d47bb001",
   });
+  const abiCoder = new ethers.utils.AbiCoder();
+
+  const decode = abiCoder.decode(["bytes"], ret);
+  const publicKey = decode[0];
+
   _instance = await createInstance({ chainId, publicKey });
 };
 
@@ -207,25 +216,7 @@ class NftGuessr {
   }
 
   async getAllAddressesAndTokenIds() {
-    const totalSupply = await contractGame.totalSupply();
-    console.log("::::::::::::::::::::", totalSupply);
-    const addressToTokenIds = {};
-    const promises = [];
-    for (let i = 1; i <= totalSupply; i++) {
-      const currentOwner = await contractGame.ownerOf(i);
-      console.log(currentOwner.toString());
-      promises.push(
-        this.getAddressToTokenIds(currentOwner, i, addressToTokenIds)
-      );
-    }
-    try {
-      await Promise.all(promises);
-      return addressToTokenIds;
-    } catch (error) {
-      loggerServer.error("getAllAddressesAndTokenIds", error);
-
-      return error;
-    }
+    return this.utiles.managerFile.getStats();
   }
 
   async getTotalNft() {
@@ -239,44 +230,51 @@ class NftGuessr {
   }
 
   start;
-
   startGpsCheckResultListener() {
     loggerServer.trace("Listening for GpsCheckResult events...");
 
-    contract.on("GpsCheckResult", async (user, result, tokenId) => {
-      const formatTokenId = tokenId.toString();
-      loggerServer.trace(
-        `GpsCheckResult Event - User: ${user}, Token ID: ${formatTokenId}, isWinner: ${result}`
-      );
-      try {
-        if (result) {
-          await this.utiles.managerFile.manageFiles({
-            nftIds: [formatTokenId],
-            fee: [{ [formatTokenId]: 0 }],
-            isReset: false,
-          });
-          const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
-          loggerServer.info(`GpsCheckResult: ${message}`);
+    contract.on(
+      "GpsCheckResult",
+      async (user, previousOwner, result, tokenId) => {
+        const formatTokenId = tokenId.toString();
+        loggerServer.trace(
+          `GpsCheckResult Event - User: ${user}, Previous owner: ${previousOwner} Token ID: ${formatTokenId}, isWinner: ${result}`
+        );
+        try {
+          if (result) {
+            await this.utiles.managerFile.manageFiles({
+              nftIds: [formatTokenId],
+              fee: [{ [formatTokenId]: 0 }],
+              isReset: false,
+            });
+            await this.utiles.managerFile.manageFilesSats(
+              user,
+              previousOwner,
+              Number(formatTokenId)
+            );
+            const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
+            loggerServer.info(`GpsCheckResult: ${message}`);
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult ${message}`,
+            // });
+            // this.telegram.sendMessageGroup(
+            //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+            // );
+          } else {
+            const message = `A user lose ${formatTokenId}`;
+            loggerServer.info(`GpsCheckResult: ${message}`);
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult lose ${formatTokenId}`,
+            // });
+          }
+        } catch (error) {
+          loggerServer.fatal(`startGpsCheckResultListener: `, error);
           // this.telegram.sendMessageLog({
-          //   message: `GpsCheckResult ${message}`,
-          // });
-          // this.telegram.sendMessageGroup(
-          //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-          // );
-        } else {
-          const message = `A user lose ${formatTokenId}`;
-          loggerServer.info(`GpsCheckResult: ${message}`);
-          // this.telegram.sendMessageLog({
-          //   message: `GpsCheckResult lose ${formatTokenId}`,
+          //   message: `Error GpsCheckResult ${formatTokenId}`,
           // });
         }
-      } catch (error) {
-        loggerServer.fatal(`startGpsCheckResultListener: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `Error GpsCheckResult ${formatTokenId}`,
-        // });
       }
-    });
+    );
   }
 
   async startCreateNFTListener() {
@@ -300,6 +298,12 @@ class NftGuessr {
           tokenIdReadable,
           feeReadable,
           [lat, lng]
+        );
+
+        await this.utiles.managerFile.writeFileStatsCreate(
+          user,
+          Number(tokenIdReadable),
+          Number(feeReadable)
         );
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
@@ -335,6 +339,11 @@ class NftGuessr {
           fee: [{ [tokenIdReadable]: taxReadable }],
           isReset,
         });
+        await this.utiles.managerFile.writeStatsReset(
+          user,
+          Number(tokenIdReadable),
+          Number(taxReadable)
+        );
         loggerServer.info(
           `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
         );
@@ -377,8 +386,10 @@ class NftGuessr {
 
     contract.on("RewardOwnerFees", async (user, amount, balance) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      const balanceReadable = Number(this.utiles.convertWeiToEth(balance));
+
       loggerServer.info(
-        `RewardOwnerFees Event - Owner: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
+        `RewardOwnerFees Event - Owner: ${user}, Amount: ${amountReadable}, Balance: ${balanceReadable}`
       );
     });
   }
@@ -387,8 +398,10 @@ class NftGuessr {
 
     contract.on("RewardTeams", async (user, amount, balance) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      const balanceReadable = Number(this.utiles.convertWeiToEth(balance));
+
       loggerServer.info(
-        `RewardTeams Event - Teams: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
+        `RewardTeams Event - Teams: ${user}, Amount: ${amountReadable}, Balance: ${balanceReadable}`
       );
     });
   }
@@ -397,14 +410,27 @@ class NftGuessr {
 
     contract.on("RewardStakers", async (user, amount, balance) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      const balanceReadable = Number(this.utiles.convertWeiToEth(balance));
+
       loggerServer.info(
-        `RewardStakers Event - User: ${user}, Amount: ${amountReadable}, Balance: ${balance}`
+        `RewardStakers Event - User: ${user}, Amount: ${amountReadable}, Balance: ${balanceReadable}`
       );
     });
   }
 
   startRewardWithERC20Listener() {
     loggerServer.trace("Listening for RewardWinner events...");
+
+    contract.on("RewardWinner", async (user, amount) => {
+      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+      loggerServer.info(
+        `RewardWinner Event - User: ${user}, Amount: ${amountReadable}`
+      );
+    });
+  }
+
+  startStakeUnstake() {
+    loggerServer.trace("Listening for stake / unstake events...");
 
     contract.on("RewardWinner", async (user, amount) => {
       const amountReadable = Number(this.utiles.convertWeiToEth(amount));
@@ -439,6 +465,7 @@ class NftGuessr {
     this.startRewardOwnerFeeListener();
     this.startRewardStakers();
     this.startRewardTeams();
+    this.startStake;
     //this.test();
   }
 }

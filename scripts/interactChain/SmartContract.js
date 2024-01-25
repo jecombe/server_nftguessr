@@ -12,7 +12,6 @@ dotenv.config();
 const contractInfo = require("../../abi/NftGuessr.json");
 const path = require("path");
 const logger = require("../../srcs/utils/logger");
-
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 let _instance;
 const CONTRACT_ADDRESS = process.env.CONTRACT;
@@ -22,16 +21,25 @@ const signUser = process.env.USER_SECRET;
 const getInstance = async () => {
   if (_instance) return _instance;
 
+  // 1. Get chain id
+  //console.log(provider);
   const network = await provider.getNetwork();
 
   const chainId = +network.chainId.toString();
 
-  const publicKey = await provider.call({
-    to: "0x0000000000000000000000000000000000000044",
+  const ret = await provider.call({
+    // fhe lib address, may need to be changed depending on network
+    to: "0x000000000000000000000000000000000000005d",
+    // first four bytes of keccak256('fhePubKey(bytes1)') + 1 byte for library
+    data: "0xd9d47bb001",
   });
+  const abiCoder = new ethers.utils.AbiCoder();
 
-  _instance = createInstance({ chainId, publicKey });
-  return _instance;
+  const decode = abiCoder.decode(["bytes"], ret);
+  //const decoded = ethers.AbiCoder.defaultAbiCoder().decode(["bytes"], ret);
+  const publicKey = decode[0];
+
+  return createInstance({ chainId, publicKey });
 };
 
 // const changeThreshold = async () => {
@@ -64,7 +72,6 @@ const createNft = async () => {
     const instance = await getInstance();
 
     const obj = [];
-
     const objFees = [];
     jsonData.forEach((location) => {
       obj.push(
@@ -84,6 +91,7 @@ const createNft = async () => {
     return tx.wait();
   } catch (error) {
     console.log(error);
+
     return error;
   }
 };
