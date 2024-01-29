@@ -97,7 +97,9 @@ class Server {
   getGps() {
     app.get("/api/get-gps", async (req, res) => {
       try {
-        const randomCoordinates = await this.nftGuessr.getRandomLocation();
+        const ids = req.query.ids ? req.query.ids.split(",").map(Number) : [];
+
+        const randomCoordinates = await this.nftGuessr.getRandomLocation(ids);
         const ciphertext = this.utiles.encryptData(randomCoordinates);
         loggerServer.trace(`get-gps ${randomCoordinates.id}`);
 

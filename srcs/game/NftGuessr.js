@@ -140,7 +140,7 @@ class NftGuessr {
     return contractGame.getTotalResetNFTs();
   }
 
-  async getRandomLocation() {
+  async getRandomLocation(excludedIds) {
     const relacherVerrou = await mutex.acquire();
 
     try {
@@ -148,7 +148,8 @@ class NftGuessr {
 
       const allLocations = JSON.parse(rawData);
       const validLocations = Object.values(allLocations).filter(
-        (location) => location.isValid
+        (location) =>
+          location.isValid && !excludedIds.includes(Number(location.id))
       );
 
       if (validLocations.length === 0) {
@@ -248,7 +249,6 @@ class NftGuessr {
               isReset: false,
             });
             await this.utiles.managerFile.manageFilesSats(
-              user,
               previousOwner,
               Number(formatTokenId)
             );
@@ -342,7 +342,8 @@ class NftGuessr {
         await this.utiles.managerFile.writeStatsReset(
           user,
           Number(tokenIdReadable),
-          Number(taxReadable)
+          Number(taxReadable),
+          isReset
         );
         loggerServer.info(
           `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
@@ -465,7 +466,7 @@ class NftGuessr {
     this.startRewardOwnerFeeListener();
     this.startRewardStakers();
     this.startRewardTeams();
-    this.startStake;
+    //this.startStake;
     //this.test();
   }
 }

@@ -88,7 +88,7 @@ class ManagerFile {
     return { locationsToAdd };
   }
 
-  deleteTokenId(tokenId, data, prev) {
+  deleteTokenId(tokenId, data) {
     data.forEach((item) => {
       // Parcourir chaque objet dans dataArray
       const addressObject = Object.values(item)[0]; // Obtenir l'objet de l'adresse
@@ -131,7 +131,7 @@ class ManagerFile {
       const newAddressObject = {
         [address]: {
           tokenReset: [{ id: tokenId, feesWin: tax }],
-          tokenIdCreated: [],
+          tokenIdCreated: [tokenId],
         },
       };
 
@@ -155,16 +155,27 @@ class ManagerFile {
         // Si le tokenId n'existe pas, ajouter une nouvelle entrée dans le tableau
         addressObject[address].tokenReset.push({ id: tokenId, feesWin: tax });
       }
+    } else {
+      // Si l'adresse n'existe pas, l'ajouter avec des tableaux vides
+      const newAddressObject = {
+        [address]: {
+          tokenReset: [{ id: tokenId, feesWin: tax }],
+          tokenIdCreated: [],
+        },
+      };
+
+      dataArray.push(newAddressObject);
     }
   }
 
-  async writeStatsReset(player, tokenId, tax) {
+  async writeStatsReset(player, tokenId, tax, isReset) {
     const relacherVerrou = await mutex.acquire();
     try {
       // Lire le fichier JSON de manière asynchrone
       const data = await this.readFile(pathStats, "utf-8");
       const nftsData = JSON.parse(data);
-      this.resetTokenId(player, tokenId, tax, nftsData);
+      if (isReset) this.resetTokenId(player, tokenId, tax, nftsData);
+      else this.deleteTokenId(tokenId, nftsData);
 
       await this.writeFile(pathStats, nftsData);
     } catch (error) {
@@ -196,7 +207,7 @@ class ManagerFile {
     }
   }
 
-  async manageFilesSats(player, previous, tokenId) {
+  async manageFilesSats(previous, tokenId) {
     const relacherVerrou = await mutex.acquire();
     try {
       // Lire le fichier JSON de manière asynchrone
@@ -205,9 +216,6 @@ class ManagerFile {
       this.deleteTokenId(tokenId, nftsData, previous);
 
       await this.writeFile(pathStats, nftsData);
-      console.log(
-        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOook"
-      );
     } catch (error) {
       loggerServer.fatal("error manage file", error);
 
