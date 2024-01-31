@@ -253,24 +253,24 @@ class NftGuessr {
             );
             const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult ${message}`,
-            });
-            this.telegram.sendMessageGroup(
-              `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-            );
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult ${message}`,
+            // });
+            // this.telegram.sendMessageGroup(
+            //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+            // );
           } else {
             const message = `A user lose ${formatTokenId}`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult lose ${formatTokenId}`,
-            });
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult lose ${formatTokenId}`,
+            // });
           }
         } catch (error) {
           loggerServer.fatal(`startGpsCheckResultListener: `, error);
-          this.telegram.sendMessageLog({
-            message: `Error GpsCheckResult ${formatTokenId}`,
-          });
+          // this.telegram.sendMessageLog({
+          //   message: `Error GpsCheckResult ${formatTokenId}`,
+          // });
         }
       }
     );
@@ -307,17 +307,17 @@ class NftGuessr {
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        this.telegram.sendMessageLog({
-          message: `createNFT ${tokenIdReadable}`,
-        });
-        this.telegram.sendMessageGroup(
-          `💎 New NFT create with id ${tokenIdReadable} 💎`
-        );
+        // this.telegram.sendMessageLog({
+        //   message: `createNFT ${tokenIdReadable}`,
+        // });
+        // this.telegram.sendMessageGroup(
+        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
+        // );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal createNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal createNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
@@ -349,9 +349,9 @@ class NftGuessr {
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal ResetNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
@@ -369,6 +369,19 @@ class NftGuessr {
       );
     });
   }
+
+  startLimiterListener() {
+    loggerServer.trace("Listening for Limiter events...");
+
+    contract.on("FunctionCalled", async (user, counter) => {
+      const countReadable = Number(this.utiles.convertWeiToEth(counter));
+
+      loggerServer.info(
+        `Limiter Event - Creator: ${user}, count: ${countReadable}`
+      );
+    });
+  }
+
   startRewardCreatorFeeListener() {
     loggerServer.trace("Listening for RewardCreatorFees events...");
 
@@ -429,16 +442,16 @@ class NftGuessr {
     });
   }
 
-  startStakeUnstake() {
-    loggerServer.trace("Listening for stake / unstake events...");
+  // startStakeUnstake() {
+  //   loggerServer.trace("Listening for stake / unstake events...");
 
-    contract.on("RewardWinner", async (user, amount) => {
-      const amountReadable = Number(this.utiles.convertWeiToEth(amount));
-      loggerServer.info(
-        `RewardWinner Event - User: ${user}, Amount: ${amountReadable}`
-      );
-    });
-  }
+  //   contract.on("RewardWinner", async (user, amount) => {
+  //     const amountReadable = Number(this.utiles.convertWeiToEth(amount));
+  //     loggerServer.info(
+  //       `RewardWinner Event - User: ${user}, Amount: ${amountReadable}`
+  //     );
+  //   });
+  // }
 
   // async test() {
   //   try {
@@ -465,6 +478,7 @@ class NftGuessr {
     this.startRewardOwnerFeeListener();
     this.startRewardStakers();
     this.startRewardTeams();
+    this.startLimiterListener();
     //this.startStake;
     //this.test();
   }

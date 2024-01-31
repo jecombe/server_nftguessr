@@ -10,6 +10,25 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "caller",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "numberCall",
+                "type": "uint256"
+            }
+        ],
+        "name": "FunctionCalled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "user",
                 "type": "address"
             },
@@ -255,28 +274,15 @@
                 "internalType": "uint256",
                 "name": "amount",
                 "type": "uint256"
-            }
-        ],
-        "name": "Staked",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
+                "internalType": "bool",
+                "name": "isStake",
+                "type": "bool"
             }
         ],
-        "name": "Withdrawn",
+        "name": "StakeManagement",
         "type": "event"
     },
     {
@@ -303,6 +309,13 @@
         ],
         "name": "createNFT",
         "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "IsAuthorize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "inputs": [],
@@ -403,12 +416,44 @@
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "callCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint256[]",
                 "name": "tokenIds",
                 "type": "uint256[]"
             }
         ],
         "name": "cancelResetNFT",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_dailyLimit",
+                "type": "uint256"
+            }
+        ],
+        "name": "changeDailyLimit",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -613,6 +658,19 @@
     },
     {
         "inputs": [],
+        "name": "dailyLimit",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "estimateRewardPlayer",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -729,7 +787,20 @@
                 "type": "address"
             }
         ],
-        "name": "lastStakeUpdateTime",
+        "name": "lastCallTimestamp",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "limit",
         "outputs": [
             {
                 "internalType": "uint256",
