@@ -175,7 +175,11 @@ class Server {
     this.checkGpsCoordinates();
   }
   startApp() {
-    app.use(cors());
+    const corsOptions = {
+      origin: "*",
+      optionsSuccessStatus: 200, // Certains navigateurs IE/Edge acceptent uniquement le code de statut 200
+    };
+    app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.listen(port, () => {
