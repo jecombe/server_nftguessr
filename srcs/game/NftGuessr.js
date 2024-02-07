@@ -253,24 +253,24 @@ class NftGuessr {
             );
             const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            // this.telegram.sendMessageLog({
-            //   message: `GpsCheckResult ${message}`,
-            // });
-            // this.telegram.sendMessageGroup(
-            //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-            // );
+            this.telegram.sendMessageLog({
+              message: `GpsCheckResult ${message}`,
+            });
+            this.telegram.sendMessageGroup(
+              `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+            );
           } else {
             const message = `A user lose ${formatTokenId}`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            // this.telegram.sendMessageLog({
-            //   message: `GpsCheckResult lose ${formatTokenId}`,
-            // });
+            this.telegram.sendMessageLog({
+              message: `GpsCheckResult lose ${formatTokenId}`,
+            });
           }
         } catch (error) {
           loggerServer.fatal(`startGpsCheckResultListener: `, error);
-          // this.telegram.sendMessageLog({
-          //   message: `Error GpsCheckResult ${formatTokenId}`,
-          // });
+          this.telegram.sendMessageLog({
+            message: `Error GpsCheckResult ${formatTokenId}`,
+          });
         }
       }
     );
@@ -307,17 +307,17 @@ class NftGuessr {
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        // this.telegram.sendMessageLog({
-        //   message: `createNFT ${tokenIdReadable}`,
-        // });
-        // this.telegram.sendMessageGroup(
-        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
-        // );
+        this.telegram.sendMessageLog({
+          message: `createNFT ${tokenIdReadable}`,
+        });
+        this.telegram.sendMessageGroup(
+          `💎 New NFT create with id ${tokenIdReadable} 💎`
+        );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal createNFT ${tokenIdReadable}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal createNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
@@ -349,9 +349,9 @@ class NftGuessr {
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        // this.telegram.sendMessageLog({
-        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
-        // });
+        this.telegram.sendMessageLog({
+          message: `error fatal ResetNFT ${tokenIdReadable}`,
+        });
         return error;
       }
     });
@@ -374,11 +374,14 @@ class NftGuessr {
     loggerServer.trace("Listening for Limiter events...");
 
     contract.on("FunctionCalled", async (user, counter) => {
-      const countReadable = Number(this.utiles.convertWeiToEth(counter));
+      const countReadable = counter.toString();
 
       loggerServer.info(
         `Limiter Event - Creator: ${user}, count: ${countReadable}`
       );
+      this.telegram.sendMessageLog({
+        message: `Limiter : ${user} : ${countReadable}`,
+      });
     });
   }
 
