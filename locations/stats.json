@@ -1,0 +1,37 @@
+[
+  {
+    "0xbbd95f266f32563aa6a813469947b09ca3727bdb": {
+      "tokenReset": [
+        {
+          "id": 1,
+          "feesWin": 0
+        },
+        {
+          "id": 3,
+          "feesWin": 0
+        },
+        {
+          "id": 4,
+          "feesWin": 0
+        }
+      ],
+      "tokenIdCreated": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "0x95977386303e586B3C9765B51c8A77b7A18efb84": {
+      "tokenReset": [
+        {
+          "id": 2,
+          "feesWin": 0
+        }
+      ],
+      "tokenIdCreated": []
+    }
+  }
+]
