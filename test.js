@@ -35,13 +35,27 @@ const getTokenSignature = async (contractAddress, userAddress) => {
   }
 };
 const createFhevmInstance = async () => {
+  if (_instance) return _instance;
+
+  // 1. Get chain id
+  //console.log(provider);
   const network = await provider.getNetwork();
+
   const chainId = +network.chainId.toString();
-  const publicKey = await provider.call({
-    from: null,
-    to: "0x0000000000000000000000000000000000000044",
+
+  const ret = await provider.call({
+    // fhe lib address, may need to be changed depending on network
+    to: "0x000000000000000000000000000000000000005d",
+    // first four bytes of keccak256('fhePubKey(bytes1)') + 1 byte for library
+    data: "0xd9d47bb001",
   });
-  _instance = await createInstance({ chainId, publicKey });
+  const abiCoder = new ethers.utils.AbiCoder();
+
+  const decode = abiCoder.decode(["bytes"], ret);
+  //const decoded = ethers.AbiCoder.defaultAbiCoder().decode(["bytes"], ret);
+  const publicKey = decode[0];
+
+  return createInstance({ chainId, publicKey });
 };
 
 // const getInstance = async () => {
@@ -70,7 +84,7 @@ const createFhevmInstance = async () => {
 
 const decrypt = async () => {
   await createFhevmInstance();
-  const { signature, publicKey } = await getTokenSignature();
+  // const { signature, publicKey } = await getTokenSignature();
   //   console.log(instance);
 
   //   const generatedToken = instance.generatePublicKey({
@@ -86,10 +100,10 @@ const decrypt = async () => {
   //   console.log(signature);
   //   instance.setSignature(process.env.GAME, signature);
 
-  const res = await contractSign.getNFTLocation(2, publicKey, signature);
-  console.log(res);
-  const balance = getInstance().decrypt(process.env.GAME, res[0]);
-  console.log(balance);
+  //   const res = await contractSign.getNFTLocation(2, publicKey, signature);
+  //   console.log(res);
+  //   const balance = getInstance().decrypt(process.env.GAME, res[0]);
+  //   console.log(balance);
 };
 
 decrypt();
