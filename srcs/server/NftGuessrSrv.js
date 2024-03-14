@@ -22,9 +22,21 @@ const limiter = rateLimit({
   // store: ... , //
 });
 
+const limiter2 = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 heures
+  limit: 1000, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+
+  standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+  keyGenerator: function (req) {
+    // Utiliser l'adresse IP comme clé
+    return req.ip;
+  },
+  // store: ... , //
+});
+
 class Server {
   constructor() {
-    //this.telegram = new Telegram(this.utiles, this.nftGuessr);
+    this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.utiles = new Utiles();
     this.nftGuessr = new NftGuessr(this.utiles, this?.telegram);
     this.mapGoogle = new Map();
@@ -75,7 +87,7 @@ class Server {
   // }
 
   getGameStats() {
-    app.use("/api/get-statGame", limiter); // Appliquer le limiteur à cette route
+    app.use("/api/get-statGame", limiter2); // Appliquer le limiteur à cette route
 
     app.get("/api/get-statGame", async (req, res) => {
       try {
@@ -128,19 +140,21 @@ class Server {
     });
   }
 
-  // getHolderAndTokens() {
-  //   app.get("/api/get-holder-and-token", async (req, res) => {
-  //     try {
-  //       const result = await this.nftGuessr.getAllAddressesAndTokenIds();
-  //       res.json(result);
-  //       loggerServer.trace("get-holder-and-token");
-  //     } catch (error) {
-  //       loggerServer.error("get-holder-and-token.", error);
+  getHolderAndTokens() {
+    app.use("/api/get-holder-and-token", limiter2); // Appliquer le limiteur à cette route
 
-  //       res.status(500).send("Error intern server (1).");
-  //     }
-  //   });
-  // }
+    app.get("/api/get-holder-and-token", async (req, res) => {
+      try {
+        const result = await this.nftGuessr.getAllAddressesAndTokenIds();
+        res.json(result);
+        loggerServer.trace("get-holder-and-token");
+      } catch (error) {
+        loggerServer.error("get-holder-and-token.", error);
+
+        res.status(500).send("Error intern server (1).");
+      }
+    });
+  }
 
   // getTotalResetNfts() {
   //   app.get("/api/get-total-nft-reset", async (req, res) => {
@@ -175,9 +189,9 @@ class Server {
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        // this.telegram.sendMessageLog({
-        //   message: "error check-new-coordinates",
-        // });
+        this.telegram.sendMessageLog({
+          message: "error check-new-coordinates",
+        });
         res.status(500).send("Error intern server (7).");
       }
     });
@@ -189,7 +203,7 @@ class Server {
     // this.getRewardWinner();
     // this.getTotalNft();
     this.getGameStats();
-    /// this.getHolderAndTokens();
+    this.getHolderAndTokens();
     this.getGps();
     this.checkGpsCoordinates();
   }
