@@ -7,8 +7,6 @@
     "southLat": 5539189,
     "eastLon": 2112061,
     "westLon": 2107569,
-    "creator": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
-    "owner": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
     "tax": 0,
     "id": 1,
     "lat": 5541435,
@@ -22,8 +20,6 @@
     "southLat": 5249489,
     "eastLon": 1341756,
     "westLon": 1337265,
-    "creator": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
-    "owner": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
     "tax": 0,
     "id": 2,
     "lat": 5251735,
@@ -39,8 +35,6 @@
     "westLon": 486674,
     "tax": 0,
     "id": 3,
-    "creator": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
-    "owner": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
     "lat": 5236883,
     "lng": 488920
   },
@@ -52,8 +46,6 @@
     "southLat": 4137899,
     "eastLon": 219518,
     "westLon": 215026,
-    "creator": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
-    "owner": "0xbbd95f266f32563aa6a813469947b09ca3727bdb",
     "tax": 0,
     "id": 4,
     "lat": 4140145,
@@ -61,12 +53,16 @@
   },
   "6": {
     "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
+    "latitude": 52.368834,
+    "longitude": 4.8892019,
+    "northLat": 5239129,
+    "southLat": 5234637,
+    "eastLon": 491165,
+    "westLon": 486674,
     "tax": 0,
     "id": 6,
-    "lat": 0,
-    "lng": 0
+    "lat": 5236883,
+    "lng": 488920
   },
   "7": {
     "isValid": true,
@@ -79,164 +75,11 @@
   },
   "8": {
     "isValid": true,
-    "latitude": 59.93287,
-    "longitude": 25.81781,
+    "latitude": 56.31464,
+    "longitude": 97.72008,
     "tax": 0,
     "id": 8,
-    "lat": 5993287,
-    "lng": 2581781
-  },
-  "10": {
-    "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
-    "tax": 0,
-    "id": 10,
-    "lat": 0,
-    "lng": 0
-  },
-  "11": {
-    "isValid": true,
-    "latitude": 66.72398,
-    "longitude": 28.29548,
-    "tax": 0,
-    "id": 11,
-    "lat": 6672398,
-    "lng": 2829548
-  },
-  "12": {
-    "isValid": true,
-    "latitude": 62.78192,
-    "longitude": 11.80806,
-    "tax": 0,
-    "id": 12,
-    "lat": 6278192,
-    "lng": 1180806
-  },
-  "13": {
-    "isValid": true,
-    "latitude": 58.91838,
-    "longitude": 5.92283,
-    "tax": 0,
-    "id": 13,
-    "lat": 5891838,
-    "lng": 592283
-  },
-  "14": {
-    "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
-    "tax": 0,
-    "id": 14,
-    "lat": 0,
-    "lng": 0
-  },
-  "15": {
-    "isValid": true,
-    "latitude": 54.14522,
-    "longitude": 12.79955,
-    "tax": 0,
-    "id": 15,
-    "lat": 5414522,
-    "lng": 1279955
-  },
-  "16": {
-    "isValid": true,
-    "latitude": 62.15834,
-    "longitude": 11.67759,
-    "tax": 0,
-    "id": 16,
-    "lat": 6215834,
-    "lng": 1167759
-  },
-  "17": {
-    "isValid": true,
-    "latitude": 44.46573,
-    "longitude": 15.981,
-    "tax": 0,
-    "id": 17,
-    "lat": 4446573,
-    "lng": 1598100
-  },
-  "18": {
-    "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
-    "tax": 0,
-    "id": 18,
-    "lat": 0,
-    "lng": 0
-  },
-  "19": {
-    "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
-    "tax": 0,
-    "id": 19,
-    "lat": 0,
-    "lng": 0
-  },
-  "20": {
-    "isValid": true,
-    "latitude": 60.3728,
-    "longitude": 24.81539,
-    "tax": 0,
-    "id": 20,
-    "lat": 6037280,
-    "lng": 2481539
-  },
-  "21": {
-    "isValid": true,
-    "latitude": 0,
-    "longitude": 0,
-    "tax": 0,
-    "id": 21,
-    "lat": 0,
-    "lng": 0
-  },
-  "22": {
-    "isValid": true,
-    "latitude": 53.03942,
-    "longitude": 16.41231,
-    "tax": 0,
-    "id": 22,
-    "lat": 5303942,
-    "lng": 1641231
-  },
-  "23": {
-    "isValid": true,
-    "latitude": 53.46765,
-    "longitude": 15.70927,
-    "tax": 0,
-    "id": 23,
-    "lat": 5346765,
-    "lng": 1570927
-  },
-  "24": {
-    "isValid": true,
-    "latitude": 51.92315,
-    "longitude": 81.05113,
-    "tax": 0,
-    "id": 24,
-    "lat": 5192315,
-    "lng": 8105113
-  },
-  "25": {
-    "isValid": true,
-    "latitude": 12.32195,
-    "longitude": 12193300,
-    "tax": 0,
-    "id": 25,
-    "lat": 1232195,
-    "lng": 12193300
-  },
-  "26": {
-    "isValid": true,
-    "latitude": 48.06754,
-    "longitude": 74.08291,
-    "tax": 0,
-    "id": 26,
-    "lat": 4806754,
-    "lng": 7408291
+    "lat": 5631464,
+    "lng": 9772008
   }
 }

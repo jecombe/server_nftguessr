@@ -89,31 +89,5 @@
     "id": 7,
     "lat": 4140145,
     "lng": 217272
-  },
-  {
-    "isValid": true,
-    "latitude": 48.8028832,
-    "longitude": 2.1278559,
-    "northLat": 4882534,
-    "southLat": 4878042,
-    "eastLon": 215031,
-    "westLon": 210539,
-    "tax": 0,
-    "id": 8,
-    "lat": 4880288,
-    "lng": 212785
-  },
-  {
-    "isValid": true,
-    "latitude": 41.0257788,
-    "longitude": 28.9742018,
-    "northLat": 4104823,
-    "southLat": 4100332,
-    "eastLon": 2899665,
-    "westLon": 2895174,
-    "tax": 0,
-    "id": 9,
-    "lat": 4102577,
-    "lng": 2897420
   }
 ]
