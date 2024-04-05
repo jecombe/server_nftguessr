@@ -69,7 +69,7 @@ class NftGuessr {
     this.addrContrat = process.env.CONTRACT;
     this.contract = contract;
     this.provider = provider;
-    this.telegram = telegram;
+    // this.telegram = telegram;
   }
 
   async init() {
@@ -147,9 +147,13 @@ class NftGuessr {
       const rawData = await this.utiles.managerFile.readFile(pathNfts);
 
       const allLocations = JSON.parse(rawData);
+      // const validLocations = Object.values(allLocations).filter(
+      //   (location) =>
+      //     location.isValid && !excludedIds.includes(Number(location.id))
+      // );
+
       const validLocations = Object.values(allLocations).filter(
-        (location) =>
-          location.isValid && !excludedIds.includes(Number(location.id))
+        (location) => location.isValid
       );
 
       if (validLocations.length === 0) {
@@ -253,24 +257,24 @@ class NftGuessr {
             );
             const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult ${message}`,
-            });
-            this.telegram.sendMessageGroup(
-              `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-            );
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult ${message}`,
+            // });
+            // this.telegram.sendMessageGroup(
+            //   `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
+            // );
           } else {
             const message = `A user lose ${formatTokenId}`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
-              message: `GpsCheckResult lose ${formatTokenId}`,
-            });
+            // this.telegram.sendMessageLog({
+            //   message: `GpsCheckResult lose ${formatTokenId}`,
+            // });
           }
         } catch (error) {
           loggerServer.fatal(`startGpsCheckResultListener: `, error);
-          this.telegram.sendMessageLog({
-            message: `Error GpsCheckResult ${formatTokenId}`,
-          });
+          // this.telegram.sendMessageLog({
+          //   message: `Error GpsCheckResult ${formatTokenId}`,
+          // });
         }
       }
     );
@@ -300,24 +304,24 @@ class NftGuessr {
         );
 
         await this.utiles.managerFile.writeFileStatsCreate(
-          user,
+          `${user}`,
           Number(tokenIdReadable),
           Number(feeReadable)
         );
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        this.telegram.sendMessageLog({
-          message: `createNFT ${tokenIdReadable}`,
-        });
-        this.telegram.sendMessageGroup(
-          `💎 New NFT create with id ${tokenIdReadable} 💎`
-        );
+        // this.telegram.sendMessageLog({
+        //   message: `createNFT ${tokenIdReadable}`,
+        // });
+        // this.telegram.sendMessageGroup(
+        //   `💎 New NFT create with id ${tokenIdReadable} 💎`
+        // );
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal createNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal createNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
@@ -349,9 +353,9 @@ class NftGuessr {
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        this.telegram.sendMessageLog({
-          message: `error fatal ResetNFT ${tokenIdReadable}`,
-        });
+        // this.telegram.sendMessageLog({
+        //   message: `error fatal ResetNFT ${tokenIdReadable}`,
+        // });
         return error;
       }
     });
@@ -379,9 +383,9 @@ class NftGuessr {
       loggerServer.info(
         `Limiter Event - Creator: ${user}, count: ${countReadable}`
       );
-      this.telegram.sendMessageLog({
-        message: `Limiter : ${user} : ${countReadable}`,
-      });
+      // this.telegram.sendMessageLog({
+      //   message: `Limiter : ${user} : ${countReadable}`,
+      // });
     });
   }
 

@@ -5,13 +5,14 @@ const util = require("util");
 const path = require("path");
 const { loggerScript } = require("../../srcs/utils/logger");
 const rajoutLocations = path.resolve(__dirname, "../../locations/rajout.json");
-
+const dotenv = require("dotenv");
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
-
+dotenv.config();
 // Remplacez 'YOUR_API_KEY' par votre propre clé d'API Google Maps
+
 const googleMapsClient = require("@google/maps").createClient({
-  key: process.env.GOOGLE_MAP_CLIENT,
+  key: process.env.API_KEY_MAPS,
   Promise: Promise,
 });
 
@@ -224,26 +225,26 @@ const randomLocation = async (nb) => {
 //   console.error("Une erreur s'est produite :", error);
 // });
 
-// const create = async () => {
-//   const lat = 41.0257788;
-//   const long = 28.9742018;
-//   const square = createSquareAroundPointWithDecimals(lat, long, 5);
+const create = async () => {
+  const lat = 48.8031996;
+  const long = 2.1265162;
+  const square = createSquareAroundPointWithDecimals(lat, long, 5);
 
-//   const r = {
-//     latitude: lat,
-//     longitude: long,
-//     northLat: square.northLat,
-//     southLat: square.southLat,
-//     eastLon: square.eastLon,
-//     westLon: square.westLon,
-//     tax: 0,
-//     id: 6,
-//     lat: square.lat,
-//     lng: square.lng,
-//   };
+  const r = {
+    latitude: lat,
+    longitude: long,
+    northLat: square.northLat,
+    southLat: square.southLat,
+    eastLon: square.eastLon,
+    westLon: square.westLon,
+    tax: 0,
+    id: 6,
+    lat: square.lat,
+    lng: square.lng,
+  };
 
-//   console.log(`Points GPS valides enregistrés`, r);
-// };
+  console.log(`Points GPS valides enregistrés`, r);
+};
 
 // create();
 module.exports = {

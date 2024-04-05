@@ -194,7 +194,7 @@ class ManagerFile {
       // Lire le fichier JSON de manière asynchrone
       const data = await this.readFile(pathStats, "utf-8");
       const nftsData = JSON.parse(data);
-      this.createdTokenId(player, tokenId, tax, nftsData);
+      this.createdTokenId(`${player}`.toLowerCase(), tokenId, tax, nftsData);
 
       await this.writeFile(pathStats, nftsData);
     } catch (error) {
