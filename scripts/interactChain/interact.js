@@ -49,10 +49,12 @@ const setAddressToken = async () => {
       gasLimit: 10000000,
     });
     await tx.wait();
+    console.log(tx);
     const tx3 = await contract.setAddressGame(process.env.GAME, {
       gasLimit: 10000000,
     });
     await tx3.wait();
+    console.log(tx3);
     const tx2 = await contract.setAddressAirdropToken(
       process.env.AIRDROP,
       process.env.TOKEN,
@@ -61,6 +63,7 @@ const setAddressToken = async () => {
       }
     );
     await tx2.wait();
+    console.log(tx2);
     const tx0 = await contract.setDistribution({
       gasLimit: 10000000,
     });

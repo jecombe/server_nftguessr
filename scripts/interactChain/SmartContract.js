@@ -9,6 +9,8 @@ const {
 const dotenv = require("dotenv");
 const fs = require("fs");
 const contractInfo = require("../../abi/NftGuessr.json");
+//const contractInfo = require("../../abi/test.json");
+
 const path = require("path");
 const logger = require("../../srcs/utils/logger");
 dotenv.config();
@@ -18,14 +20,11 @@ const CONTRACT_ADDRESS = process.env.CONTRACT;
 const sign = process.env.SECRET;
 const signUser = process.env.USER_SECRET;
 
-const provider = new ethers.providers.JsonRpcProvider(
-  "https://devnet.zama.ai/"
-);
+const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
 const contractAddress = process.env.CONTRACT;
 const signer = new Wallet(sign, provider);
 
 const contract = new Contract(process.env.CONTRACT, contractInfo, signer);
-
 // const getInstance = async () => {
 //   if (_instance) return _instance;
 
@@ -138,17 +137,19 @@ const createNft = async () => {
     const tx = await contract.createGpsOwner(obj, objFees, {
       gasLimit: 10000000,
     });
-    const emptyData = [];
-
-    // Écriture du contenu dans le fichier JSON
-    fs.writeFile(fullPath, JSON.stringify(emptyData), (err) => {
+    // const tx = await contract.createGpsOwner(obj, objFees, {
+    //   gasLimit: 10000000,
+    // });
+    //  console.log(tx);
+    await tx.wait();
+    console.log(tx);
+    fs.writeFile(fullPath, JSON.stringify([]), (err) => {
       if (err) {
         console.error("Erreur lors de la vidange du fichier :", err);
         return;
       }
       console.log("Le fichier a été vidé avec succès.");
     });
-    return tx.wait();
   } catch (error) {
     console.log(error);
 

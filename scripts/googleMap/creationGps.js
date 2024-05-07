@@ -193,7 +193,6 @@ const randomLocation = async (nb) => {
             lng: square.lng,
           });
 
-          id++;
           i++;
           loggerScript.info(
             `Points GPS valides enregistrés : ${locationsToAdd.length}`

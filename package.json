@@ -23,7 +23,7 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.2.0",
     "express-slow-down": "^2.0.1",
-    "fhevmjs": "^0.3.1",
+    "fhevmjs": "^0.4.0",
     "jsonwebtoken": "^9.0.2",
     "log4js": "^6.9.1",
     "node-telegram-bot-api": "^0.64.0",
