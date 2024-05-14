@@ -11,10 +11,6 @@
           "feesWin": 0
         },
         {
-          "id": 3,
-          "feesWin": 0
-        },
-        {
           "id": 4,
           "feesWin": 0
         }
@@ -24,6 +20,19 @@
         2,
         3,
         4
+      ]
+    }
+  },
+  {
+    "0x95977386303e586b3c9765b51c8a77b7a18efb84": {
+      "tokenReset": [
+        {
+          "id": 5,
+          "feesWin": 0
+        }
+      ],
+      "tokenIdCreated": [
+        5
       ]
     }
   }

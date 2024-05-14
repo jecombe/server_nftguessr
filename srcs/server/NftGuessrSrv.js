@@ -44,47 +44,47 @@ class Server {
     this.startServer();
   }
 
-  // getFees() {
-  //   app.get("/api/get-fees", async (req, res) => {
-  //     try {
-  //       const fees = await this.nftGuessr.getFees();
+  getFees() {
+    app.get("/api/get-fees", async (req, res) => {
+      try {
+        const fees = await this.nftGuessr.getFees();
 
-  //       const rep = Math.round(this.utiles.convertEthToWei(fees));
-  //       res.json(rep.toString());
-  //       loggerServer.trace("get-fees");
-  //     } catch (error) {
-  //       loggerServer.error("get-fees", error);
-  //       res.status(500).send("Error intern server (5).");
-  //     }
-  //   });
-  // }
+        const rep = Math.round(this.utiles.convertEthToWei(fees));
+        res.json(rep.toString());
+        loggerServer.trace("get-fees");
+      } catch (error) {
+        loggerServer.error("get-fees", error);
+        res.status(500).send("Error intern server (5).");
+      }
+    });
+  }
 
-  // getFeesCreation() {
-  //   app.get("/api/get-fees-creation", async (req, res) => {
-  //     try {
-  //       const nftsStake = await this.nftGuessr.getFeesCreation();
+  getFeesCreation() {
+    app.get("/api/get-fees-creation", async (req, res) => {
+      try {
+        const nftsStake = await this.nftGuessr.getFeesCreation();
 
-  //       res.json(nftsStake.toString());
-  //       loggerServer.trace("get-total-nft-stake.");
-  //     } catch (error) {
-  //       loggerServer.error("get-total-nft-stake.", error);
-  //       res.status(500).send("Error intern server (3).");
-  //     }
-  //   });
-  // }
+        res.json(nftsStake.toString());
+        loggerServer.trace("get-total-nft-stake.");
+      } catch (error) {
+        loggerServer.error("get-total-nft-stake.", error);
+        res.status(500).send("Error intern server (3).");
+      }
+    });
+  }
 
-  // getRewardWinner() {
-  //   app.get("/api/get-reward-winner", async (req, res) => {
-  //     try {
-  //       const nftsStake = await this.nftGuessr.getAmountRewardUser();
-  //       res.json(nftsStake.toString());
-  //       loggerServer.trace("get-total-nft-stake.");
-  //     } catch (error) {
-  //       loggerServer.error("get-total-nft-stake.", error);
-  //       res.status(500).send("Error intern server (3).");
-  //     }
-  //   });
-  // }
+  getRewardWinner() {
+    app.get("/api/get-reward-winner", async (req, res) => {
+      try {
+        const nftsStake = await this.nftGuessr.getAmountRewardUser();
+        res.json(nftsStake.toString());
+        loggerServer.trace("get-total-nft-stake.");
+      } catch (error) {
+        loggerServer.error("get-total-nft-stake.", error);
+        res.status(500).send("Error intern server (3).");
+      }
+    });
+  }
 
   getGameStats() {
     app.use("/api/get-statGame", limiter2); // Appliquer le limiteur à cette route
@@ -107,19 +107,19 @@ class Server {
     });
   }
 
-  // getTotalNft() {
-  //   app.get("/api/get-total-nft", async (req, res) => {
-  //     try {
-  //       const holdersAndTokenIds = await this.nftGuessr.getTotalNft();
+  getTotalNft() {
+    app.get("/api/get-total-nft", async (req, res) => {
+      try {
+        const holdersAndTokenIds = await this.nftGuessr.getTotalNft();
 
-  //       res.json(holdersAndTokenIds);
-  //       loggerServer.trace("get-total-nft");
-  //     } catch (error) {
-  //       loggerServer.error("get-total-nft.", error);
-  //       res.status(500).send("Error intern server (2).");
-  //     }
-  //   });
-  // }
+        res.json(holdersAndTokenIds);
+        loggerServer.trace("get-total-nft");
+      } catch (error) {
+        loggerServer.error("get-total-nft.", error);
+        res.status(500).send("Error intern server (2).");
+      }
+    });
+  }
 
   getGps() {
     app.use("/api/get-gps", limiter); // Appliquer le limiteur à cette route
@@ -156,18 +156,18 @@ class Server {
     });
   }
 
-  // getTotalResetNfts() {
-  //   app.get("/api/get-total-nft-reset", async (req, res) => {
-  //     try {
-  //       const nftsStake = await this.nftGuessr.getTotalResetNFTs();
-  //       res.json(nftsStake.toString());
-  //       loggerServer.info("get-total-nft-reset.");
-  //     } catch (error) {
-  //       loggerServer.error("get-total-nft-reset", error);
-  //       res.status(500).send("Error intern server (6).");
-  //     }
-  //   });
-  // }
+  getTotalResetNfts() {
+    app.get("/api/get-total-nft-reset", async (req, res) => {
+      try {
+        const nftsStake = await this.nftGuessr.getTotalResetNFTs();
+        res.json(nftsStake.toString());
+        loggerServer.info("get-total-nft-reset.");
+      } catch (error) {
+        loggerServer.error("get-total-nft-reset", error);
+        res.status(500).send("Error intern server (6).");
+      }
+    });
+  }
 
   checkGpsCoordinates() {
     app.use("/api/check-new-coordinates", limiter); // Appliquer le limiteur à cette route
@@ -198,10 +198,10 @@ class Server {
   }
 
   getApi() {
-    // this.getFees();
-    // this.getFeesCreation();
-    // this.getRewardWinner();
-    // this.getTotalNft();
+    this.getFees();
+    this.getFeesCreation();
+    this.getRewardWinner();
+    this.getTotalNft();
     this.getGameStats();
     this.getHolderAndTokens();
     this.getGps();

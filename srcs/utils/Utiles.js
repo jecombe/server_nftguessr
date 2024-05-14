@@ -87,11 +87,11 @@ class ManagerFile {
     // Utilisez let ici pour déclarer saveLocations
     return { locationsToAdd };
   }
-
   deleteTokenId(tokenId, data) {
-    data.forEach((item) => {
+    data.forEach((item, index) => {
       // Parcourir chaque objet dans dataArray
-      const addressObject = Object.values(item)[0]; // Obtenir l'objet de l'adresse
+      const addressKey = Object.keys(item)[0]; // Obtenir la clé d'adresse
+      const addressObject = item[addressKey]; // Obtenir l'objet de l'adresse
       if (addressObject && addressObject.tokenReset) {
         // Si l'objet a un tableau tokenReset
         const tokenResetIndex = addressObject.tokenReset.findIndex(
@@ -100,11 +100,14 @@ class ManagerFile {
         if (tokenResetIndex !== -1) {
           // Si le tokenId est trouvé, le supprimer du tableau tokenReset
           addressObject.tokenReset.splice(tokenResetIndex, 1);
-
-          // Si le tableau tokenReset est vide, supprimer l'objet principal
-          // if (addressObject.tokenReset.length === 0) {
-          //   delete item[Object.keys(item)[0]];
-          // }
+          // Si le tableau tokenReset est vide, vérifier le tableau tokenIdCreated
+          if (
+            addressObject.tokenReset.length === 0 &&
+            addressObject.tokenIdCreated.length === 0
+          ) {
+            // Si les deux tableaux sont vides, supprimer l'objet principal
+            data.splice(index, 1);
+          }
         }
       }
     });
@@ -207,13 +210,13 @@ class ManagerFile {
     }
   }
 
-  async manageFilesSats(previous, tokenId) {
+  async manageFilesSats(tokenId) {
     const relacherVerrou = await mutex.acquire();
     try {
       // Lire le fichier JSON de manière asynchrone
       const data = await this.readFile(pathStats, "utf-8");
       const nftsData = JSON.parse(data);
-      this.deleteTokenId(tokenId, nftsData, previous);
+      this.deleteTokenId(tokenId, nftsData);
 
       await this.writeFile(pathStats, nftsData);
     } catch (error) {

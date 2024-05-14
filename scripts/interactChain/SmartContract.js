@@ -110,8 +110,6 @@ const createNft = async () => {
   const jsonData = JSON.parse(rawData);
 
   try {
-    console.log(process.env.CONTRACT);
-
     // const signer = new Wallet(sign, provider);
 
     // Initialize contract with ethers

@@ -251,7 +251,6 @@ class NftGuessr {
               isReset: false,
             });
             await this.utiles.managerFile.manageFilesSats(
-              previousOwner,
               Number(formatTokenId)
             );
             const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
@@ -291,15 +290,19 @@ class NftGuessr {
         `createNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, Fee: ${feeReadable}`
       );
       try {
+        console.log("OKOKOKOKOKOKOKOKOK");
         const nb = await this.getNFTLocation(tokenIdReadable);
         const lat = getInstance().decrypt(process.env.GAME, nb[0]);
         const lng = getInstance().decrypt(process.env.GAME, nb[1]);
+        const parseLat = Number(lat.toString());
+        const parseLng = Number(lng.toString());
+        console.log("OKOKOKOKOKOKOKOKOK11111", parseLat, parseLng);
 
         await this.utiles.managerFile.writeNewNft(
-          user,
+          user.toLowerCase(),
           tokenIdReadable,
           feeReadable,
-          [lat, lng]
+          [parseLat, parseLng]
         );
 
         await this.utiles.managerFile.writeFileStatsCreate(
@@ -342,7 +345,7 @@ class NftGuessr {
           isReset,
         });
         await this.utiles.managerFile.writeStatsReset(
-          user,
+          user.toLowerCase(),
           Number(tokenIdReadable),
           Number(taxReadable),
           isReset
