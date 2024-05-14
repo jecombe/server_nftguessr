@@ -283,7 +283,7 @@ class NftGuessr {
 
     contract.on("createNFT", async (user, tokenId, fee) => {
       const tokenIdReadable = tokenId.toString();
-      const feeReadable = Math.round(this.utiles.convertWeiToEth(fee)); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
+      const feeReadable = this.utiles.convertWeiToEth(fee); // Suppose que cette fonction renvoie un nombre représentant la valeur en ether
 
       // Convertir le fee en nombre JavaScript
       loggerServer.trace(
