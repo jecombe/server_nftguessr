@@ -24,7 +24,7 @@ const limiter = rateLimit({
 
 const limiter2 = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 heures
-  limit: 1000, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
 
   standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
   keyGenerator: function (req) {
@@ -36,7 +36,7 @@ const limiter2 = rateLimit({
 
 class Server {
   constructor() {
-    // this.telegram = new Telegram(this.utiles, this.nftGuessr);
+    this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.utiles = new Utiles();
     this.nftGuessr = new NftGuessr(this.utiles, this?.telegram);
     this.mapGoogle = new Map();
@@ -189,9 +189,9 @@ class Server {
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        // this.telegram.sendMessageLog({
-        //   message: "error check-new-coordinates",
-        // });
+        this.telegram.sendMessageLog({
+          message: "error check-new-coordinates",
+        });
         res.status(500).send("Error intern server (7).");
       }
     });
