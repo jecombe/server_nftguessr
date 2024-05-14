@@ -2,12 +2,12 @@ const log4js = require("log4js");
 log4js.configure({
   appenders: {
     server: {
-      type: "console",
+      type: "file",
       filename: "./logs/server.log",
       layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
     },
     script: {
-      type: "console",
+      type: "file",
       filename: "./logs/script.log",
       layout: { type: "pattern", pattern: "%[[%d] %5.5p -%] %m" },
     },
