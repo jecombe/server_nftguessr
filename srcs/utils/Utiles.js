@@ -254,7 +254,7 @@ class ManagerFile {
 
       // Mettre à jour les données en fonction de l'événement Solidity
       if (nftsData[id]) {
-        nftsData[id].tax = Number(feeSave); // Mettez à jour la propriété en fonction de vos besoins
+        nftsData[id].tax = feeSave; // Mettez à jour la propriété en fonction de vos besoins
         nftsData[id].isValid = isReset;
         // Écrire de manière asynchrone les données mises à jour dans le fichier JSON
         await this.writeFile(pathNfts, nftsData);

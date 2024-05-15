@@ -9,8 +9,6 @@ const {
 const dotenv = require("dotenv");
 const fs = require("fs");
 const contractInfo = require("../../abi/NftGuessr.json");
-//const contractInfo = require("../../abi/test.json");
-
 const path = require("path");
 const logger = require("../../srcs/utils/logger");
 dotenv.config();
@@ -25,6 +23,7 @@ const contractAddress = process.env.CONTRACT;
 const signer = new Wallet(sign, provider);
 
 const contract = new Contract(process.env.CONTRACT, contractInfo, signer);
+
 // const getInstance = async () => {
 //   if (_instance) return _instance;
 
@@ -135,13 +134,11 @@ const createNft = async () => {
     const tx = await contract.createGpsOwner(obj, objFees, {
       gasLimit: 10000000,
     });
-    // const tx = await contract.createGpsOwner(obj, objFees, {
-    //   gasLimit: 10000000,
-    // });
-    //  console.log(tx);
+    const emptyData = [];
     await tx.wait();
-    console.log(tx);
-    fs.writeFile(fullPath, JSON.stringify([]), (err) => {
+
+    // Écriture du contenu dans le fichier JSON
+    fs.writeFile(fullPath, JSON.stringify(emptyData), (err) => {
       if (err) {
         console.error("Erreur lors de la vidange du fichier :", err);
         return;

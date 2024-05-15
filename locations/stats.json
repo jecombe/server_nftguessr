@@ -4,15 +4,15 @@
       "tokenReset": [
         {
           "id": 1,
-          "feesWin": 0
+          "feesWin": "0"
         },
         {
           "id": 2,
-          "feesWin": 0
+          "feesWin": "0"
         },
         {
           "id": 4,
-          "feesWin": 0
+          "feesWin": "0"
         }
       ],
       "tokenIdCreated": [
@@ -27,8 +27,12 @@
     "0x95977386303e586b3c9765b51c8a77b7a18efb84": {
       "tokenReset": [
         {
+          "id": 3,
+          "feesWin": "100000000000000000"
+        },
+        {
           "id": 5,
-          "feesWin": 0
+          "feesWin": "50000000000000000"
         }
       ],
       "tokenIdCreated": [

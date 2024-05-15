@@ -7,7 +7,7 @@
     "southLat": 5539189,
     "eastLon": 2112061,
     "westLon": 2107569,
-    "tax": 0,
+    "tax": "0",
     "id": 1,
     "lat": 5541435,
     "lng": 2109815
@@ -20,44 +20,44 @@
     "southLat": 5249489,
     "eastLon": 1341756,
     "westLon": 1337265,
-    "tax": 0,
+    "tax": "0",
     "id": 2,
     "lat": 5251735,
     "lng": 1339510
   },
   "3": {
-    "isValid": false,
+    "isValid": true,
     "latitude": 52.368834,
     "longitude": 4.8892019,
     "northLat": 5239129,
     "southLat": 5234637,
     "eastLon": 491165,
     "westLon": 486674,
-    "tax": 0,
+    "tax": "100000000000000000",
     "id": 3,
     "lat": 5236883,
     "lng": 488920
   },
   "4": {
-    "isValid": false,
+    "isValid": true,
     "latitude": 41.4014565,
     "longitude": 2.1727238,
     "northLat": 4142391,
     "southLat": 4137899,
     "eastLon": 219518,
     "westLon": 215026,
-    "tax": 0,
+    "tax": "0",
     "id": 4,
     "lat": 4140145,
     "lng": 217272
   },
   "5": {
     "isValid": true,
-    "latitude": 48.85785,
+    "latitude": 48.8579,
     "longitude": 2.29527,
-    "tax": 0,
+    "tax": "50000000000000000",
     "id": 5,
-    "lat": 4885785,
+    "lat": 4885790,
     "lng": 229527
   }
 }
