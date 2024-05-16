@@ -93,11 +93,11 @@ class Server {
       try {
         const totalNft = await this.nftGuessr.getTotalNft();
         const data = {
-          feesGuess: 2,
+          feesGuess: 0.2,
           feesMint: 1,
           rewardWinner: 1,
           rewardStakers: 1,
-          rewardCreators: 1,
+          rewardCreators: 0.1,
           totalNft,
         };
         res.json(data);
