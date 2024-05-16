@@ -7,7 +7,7 @@ class Telegram {
   constructor(utiles, nftGuessr) {
     this.nftGuessr = nftGuessr;
     this.isDev = process.env.IS_DEV;
-    if (!this.idDev) {
+    if (!this.isDev) {
       this.bot_log = new TelegramBot(process.env.TELEGRAM_BOT_LOG_TOKEN, {
         polling: false,
       });
