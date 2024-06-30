@@ -9,6 +9,7 @@ const { Map } = require("../map/Map");
 
 const { rateLimit } = require("express-rate-limit");
 const slowDown = require("express-slow-down");
+const { MongoDataBase } = require("../database/Mongo");
 const port = 8000;
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 heures
@@ -36,9 +37,10 @@ const limiter2 = rateLimit({
 
 class Server {
   constructor() {
-    this.telegram = new Telegram(this.utiles, this.nftGuessr);
+  //  this.telegram = new Telegram(this.utiles, this.nftGuessr);
     this.utiles = new Utiles();
-    this.nftGuessr = new NftGuessr(this.utiles, this?.telegram);
+    this.database = new MongoDataBase();
+    this.nftGuessr = new NftGuessr(this.utiles, this?.telegram, this.database);
     this.mapGoogle = new Map();
 
     this.startServer();
@@ -189,9 +191,9 @@ class Server {
           `error check-new-coordinates ${latitude} ${longitude}`,
           error
         );
-        this.telegram.sendMessageLog({
+        /*gram.sendMessageLog({
           message: "error check-new-coordinates",
-        });
+        });*/
         res.status(500).send("Error intern server (7).");
       }
     });

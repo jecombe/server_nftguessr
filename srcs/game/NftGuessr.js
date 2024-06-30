@@ -63,12 +63,12 @@ const getTokenSignature = async (contractAddress, userAddress) => {
 };
 
 class NftGuessr {
-  constructor(utiles, telegram) {
+  constructor(utiles, telegram, database) {
     this.utiles = utiles;
     this.addrContrat = process.env.CONTRACT;
     this.contract = contract;
     this.provider = provider;
-    this.telegram = telegram;
+  //  this.telegram = telegram;
   }
 
   async init() {
@@ -245,34 +245,38 @@ class NftGuessr {
         );
         try {
           if (result) {
-            await this.utiles.managerFile.manageFiles({
+            await this.database.removeNftFromHolder(previousOwner, tokenId);
+            await this.database.addNftToHolder(user, tokenId)
+            await this.database.updateNftActiveStatus(tokenId, false)
+
+            /*await this.utiles.managerFile.manageFiles({
               nftIds: [formatTokenId],
               fee: [{ [formatTokenId]: 0 }],
               isReset: false,
             });
             await this.utiles.managerFile.manageFilesSats(
               Number(formatTokenId)
-            );
+            );*/
             const message = `💰 A user win NFT GeoSpace ${formatTokenId} 💰`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
+           /* this.telegram.sendMessageLog({
               message: `GpsCheckResult ${message}`,
             });
             this.telegram.sendMessageGroup(
               `💰 User ${user} win NFT GeoSpace ${formatTokenId} 💰`
-            );
+            );*/
           } else {
             const message = `A user lose ${formatTokenId}`;
             loggerServer.info(`GpsCheckResult: ${message}`);
-            this.telegram.sendMessageLog({
+           /* this.telegram.sendMessageLog({
               message: `GpsCheckResult lose ${formatTokenId}`,
-            });
+            });*/
           }
         } catch (error) {
           loggerServer.fatal(`startGpsCheckResultListener: `, error);
-          this.telegram.sendMessageLog({
+        /*  this.telegram.sendMessageLog({
             message: `Error GpsCheckResult ${formatTokenId}`,
-          });
+          });*/
         }
       }
     );
@@ -296,7 +300,12 @@ class NftGuessr {
         const parseLat = Number(lat.toString());
         const parseLng = Number(lng.toString());
 
-        await this.utiles.managerFile.writeNewNft(
+        await this.database.addNftCreationToMongoDB(`${user}`, { id: `${tokenIdReadable}` });
+        await this.database.addNftToHolder(`${user}`, { id: `${tokenIdReadable}`, tax:`${feeReadable}`});
+        await this.addNft(tokenId, parseLat, parseLng);
+
+
+       /* await this.utiles.managerFile.writeNewNft(
           user.toLowerCase(),
           tokenIdReadable,
           fee.toString(),
@@ -307,21 +316,21 @@ class NftGuessr {
           `${user}`,
           Number(tokenIdReadable),
           fee.toString()
-        );
+        );*/
 
         const message = `💎 Player: ${user} create new GeoSpace with id ${tokenIdReadable} 💎`;
         loggerServer.info(`createNFT: ${message}`);
-        this.telegram.sendMessageLog({
+        /*this.telegram.sendMessageLog({
           message: `createNFT ${tokenIdReadable}`,
         });
         this.telegram.sendMessageGroup(
           `💎 New NFT create with id ${tokenIdReadable} 💎`
-        );
+        );*/
       } catch (error) {
         loggerServer.fatal(`createNFT: `, error);
-        this.telegram.sendMessageLog({
+        /*this.telegram.sendMessageLog({
           message: `error fatal createNFT ${tokenIdReadable}`,
-        });
+        });*/
         return error;
       }
     });
@@ -337,7 +346,10 @@ class NftGuessr {
         `ResetNFT Event - User: ${user}, Token ID: ${tokenIdReadable}, isReset: ${isReset}, tax: ${taxReadable}`
       );
       try {
-        await this.utiles.managerFile.manageFiles({
+        await this.database.updateNftActiveStatus(tokenId, isReset)
+        await this.database.updateNftTax(user, tokenId, tax)
+
+        /*await this.utiles.managerFile.manageFiles({
           nftIds: [tokenIdReadable],
           fee: [{ [tokenIdReadable]: tax.toString() }],
           isReset,
@@ -347,15 +359,15 @@ class NftGuessr {
           Number(tokenIdReadable),
           tax.toString(),
           isReset
-        );
+        );*/
         loggerServer.info(
           `ResetNFT: Token ID: ${tokenIdReadable}, isReset: ${isReset}`
         );
       } catch (error) {
         loggerServer.fatal(`ResetNFT: `, error);
-        this.telegram.sendMessageLog({
+      /*  this.telegram.sendMessageLog({
           message: `error fatal ResetNFT ${tokenIdReadable}`,
-        });
+        });*/
         return error;
       }
     });
@@ -383,9 +395,9 @@ class NftGuessr {
       loggerServer.info(
         `Limiter Event - Creator: ${user}, count: ${countReadable}`
       );
-      this.telegram.sendMessageLog({
+     /* this.telegram.sendMessageLog({
         message: `Limiter : ${user} : ${countReadable}`,
-      });
+      });*/
     });
   }
 
